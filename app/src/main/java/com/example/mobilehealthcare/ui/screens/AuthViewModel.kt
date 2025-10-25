@@ -33,20 +33,35 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
     val hospitalsState = _hospitalsState.asStateFlow()
      fun register(request: RegisterRequest){
         viewModelScope.launch {
-            Log.d("Reguest",request.toString())
-            val response=authService.register(request)
-            Log.d("Response",response.body().toString())
-            val body = response.body()
-            when (body!!) {
-                is BaseResponse.SuccessResponse -> {
-                    _uiState.value = AuthState.Success(data = body.data!!, message = body.message)
-                    tokenStorage.saveToken(body.data.token)
-                }
-                is BaseResponse.ErrorResponse -> {
-                    _uiState.value = AuthState.Error(message = body.message ?: body.exception ?: "Nepoznata greška")
-                }
-            }
+            try {
+                Log.d("Request", request.toString())
+                val response = authService.register(request)
+                Log.d("Response", response.toString())
+                val body = response.body()
 
+                if (body == null) {
+                    _uiState.value = AuthState.Error("Prazan odgovor sa servera")
+                    return@launch
+                }
+
+                when (body) {
+                    is BaseResponse.SuccessResponse -> {
+                        body.data?.let { data ->
+                            _uiState.value = AuthState.Success(data = data, message = body.message)
+                            tokenStorage.saveToken(data.token)
+                        } ?: run {
+                            _uiState.value = AuthState.Error("Podaci su prazni")
+                        }
+                    }
+
+                    is BaseResponse.ErrorResponse -> {
+                        _uiState.value = AuthState.Error(body.message ?: body.exception ?: "Nepoznata greška")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("RegisterError", e.toString())
+                _uiState.value = AuthState.Error(e.message ?: "Greška pri registraciji")
+            }
         }
 
     }
@@ -65,6 +80,7 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                         if (data != null) {
                             _uiState.value = AuthState.Success(data = data, message = body.message)
                             tokenStorage.saveToken(data.token)
+                            tokenStorage.saveRole(data.user.role.toString())
                         } else {
                             _uiState.value = AuthState.Error("Data je null")
                         }

@@ -5,7 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-
 sealed class BaseResponse< T>(
     open val statusCode: Int= HttpStatusCode.OK.value
 ) {
