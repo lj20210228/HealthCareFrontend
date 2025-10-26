@@ -46,9 +46,7 @@ import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.models.request.LoginRequest
 import com.example.mobilehealthcare.ui.screens.AuthState
 import com.example.mobilehealthcare.ui.screens.AuthViewModel
-import com.example.mobilehealthcare.ui.theme.OnPrimary
-import com.example.mobilehealthcare.ui.theme.Primary
-import com.example.mobilehealthcare.ui.theme.Secondary
+
 
 @Composable
 fun LoginScreen(
@@ -64,7 +62,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Primary)
+            .background(MaterialTheme.colorScheme.secondary)
             .padding(vertical = 64.dp, horizontal = 32.dp)
         , horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -132,7 +130,7 @@ fun LoginScreen(
             modifier= Modifier.padding(vertical = 32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp,Color.White))
-                .background(Secondary)
+                .background(MaterialTheme.colorScheme.secondary)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             onClick = {
@@ -140,7 +138,7 @@ fun LoginScreen(
             },
             enabled = email.isNotEmpty()&&password.isNotEmpty(),
             colors = ButtonColors(
-                containerColor = Primary, disabledContainerColor = Secondary,
+                containerColor = MaterialTheme.colorScheme.primaryContainer, disabledContainerColor = MaterialTheme .colorScheme.onPrimaryContainer,
                 contentColor =Color.White,
                 disabledContentColor = Color.White
             ),

@@ -6,10 +6,14 @@ import com.example.mobilehealthcare.domain.Patient
 import com.example.mobilehealthcare.domain.User
 import com.example.mobilehealthcare.models.request.RegisterRequest
 import com.example.mobilehealthcare.models.response.BaseResponse
+import com.example.mobilehealthcare.models.response.ListResponse
 import com.example.mobilehealthcare.models.response.RegisterResponse
+import io.ktor.http.ContentType.Application.Json
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.PolymorphicSerializer
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.Json.Default.serializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
@@ -17,6 +21,7 @@ import kotlinx.serialization.serializer
 import kotlin.reflect.KClass
 
 val appSerializersModule = SerializersModule {
+
 
 
     polymorphic(
@@ -51,6 +56,10 @@ val appSerializersModule = SerializersModule {
         actualClass = Hospital::class,
         actualSerializer = Hospital.serializer()
     )
+
+
+
+
 
 
 }

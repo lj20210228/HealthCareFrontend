@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.compose.primaryLight
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Doctor
 import com.example.mobilehealthcare.domain.Hospital
@@ -69,9 +70,11 @@ import com.example.mobilehealthcare.domain.User
 import com.example.mobilehealthcare.models.request.RegisterRequest
 import com.example.mobilehealthcare.ui.screens.AuthState
 import com.example.mobilehealthcare.ui.screens.AuthViewModel
-import com.example.mobilehealthcare.ui.theme.OnPrimary
-import com.example.mobilehealthcare.ui.theme.Primary
-import com.example.mobilehealthcare.ui.theme.Secondary
+
+private val passwordRegex = Regex("^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\$%^&*()_+\\-={}\\[\\]:;\"'<>,.?/]).{8,}\$")
+fun isValidPassword(password: String): Boolean {
+    return passwordRegex.matches(password)
+}
 
 @Composable
 fun RegisterScreen(
@@ -110,7 +113,7 @@ fun RegisterScreen(
 
     Column(
         modifier = modifier.fillMaxSize()
-            .background( color = Primary)
+            .background( color = primaryLight)
             .verticalScroll(rememberScrollState())
             .padding(vertical = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -331,6 +334,7 @@ fun RegisterPatient(
 
 ){
     var passwordVisible by remember { mutableStateOf(false) }
+    val isPasswordValid = isValidPassword(password)
 
     Column(
         modifier= Modifier.fillMaxWidth()
@@ -429,17 +433,25 @@ fun RegisterPatient(
                 }
             },
         )
+        if (password.isNotEmpty() && !isPasswordValid) {
+            Text(
+                text = "Lozinka mora imati veliko slovo, broj i specijalan karakter.",
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
         Button(
             modifier= Modifier.padding(vertical = 32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp,Color.White))
-                .background(Secondary)
+                .background(MaterialTheme.colorScheme.secondary)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
-            onClick = {onClick},
-            enabled = email.isNotEmpty()&&password.isNotEmpty()&&jmbg.isNotEmpty()&&name.isNotEmpty()&&jmbg.length==13,
+            onClick = {onClick()},
+            enabled = email.isNotEmpty()&&password.isNotEmpty()&&jmbg.isNotEmpty()&&name.isNotEmpty()&&jmbg.length==13&&isPasswordValid,
             colors = ButtonColors(
-                containerColor = Primary, disabledContainerColor = Secondary,
+                containerColor = MaterialTheme.colorScheme.primaryContainer, disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 contentColor =Color.White,
                 disabledContentColor = Color.White
             ),
@@ -471,6 +483,7 @@ fun RegisterDoctor(
 
 ){
     var passwordVisible by remember { mutableStateOf(false) }
+    val isPasswordValid = isValidPassword(password)
 
     Column(
         modifier= Modifier.fillMaxWidth()
@@ -525,6 +538,14 @@ fun RegisterDoctor(
 
 
         )
+        if (password.isNotEmpty() && !isPasswordValid) {
+            Text(
+                text = "Lozinka mora imati veliko slovo, broj i specijalan karakter.",
+                color = Color.Red,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
         OutlinedTextField(
             value = password,
             onValueChange = onPasswordChange,
@@ -626,16 +647,16 @@ fun RegisterDoctor(
             modifier= Modifier.padding(vertical = 32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp,Color.White))
-                .background(Secondary)
+                .background(MaterialTheme.colorScheme.primary)
                 .fillMaxWidth(),
             colors = ButtonColors(
-                containerColor = Primary, disabledContainerColor = Secondary,
+                containerColor = MaterialTheme.colorScheme.secondary, disabledContainerColor = MaterialTheme.colorScheme.onSecondary,
                 contentColor =Color.White,
                 disabledContentColor = Color.White
             ),
             shape = RoundedCornerShape(16.dp),
-            onClick = {onClick},
-            enabled = email.isNotEmpty() && password.isNotEmpty() &&(isGeneral==true || specialization.isNotEmpty())&&maxPatients.isNotEmpty()
+            onClick = {onClick()},
+            enabled = email.isNotEmpty() && password.isNotEmpty() &&(isGeneral==true || specialization.isNotEmpty())&&maxPatients.isNotEmpty()&&isPasswordValid
         ) {
             Text(
                 "Registruj se"
