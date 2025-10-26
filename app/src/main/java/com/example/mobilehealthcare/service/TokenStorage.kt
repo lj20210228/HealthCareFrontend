@@ -17,9 +17,23 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
     fun saveRole(role: String) {
         prefs.edit { putString("role", role) }
     }
+    fun saveUserId(id: String) {
+        prefs.edit { putString("userId", id) }
+    }
+    fun saveDoctorId(doctorId: String) {
+        prefs.edit { putString("doctorId", doctorId) }
+    }
+    fun saveHospitalId(hospitalId: String) {
+        prefs.edit { putString("hospitalId", hospitalId) }
+    }
 
     fun getToken(): String? = prefs.getString("jwt_token", null)
     fun getRole(): String? = prefs.getString("role", null)
+    fun getUserId(): String?=prefs.getString("userId",null)
+    fun getDoctorId(): String?=prefs.getString("doctorId",null)
+
+    fun getHospitalId(): String?=prefs.getString("hospitalId",null)
+
 
 
     fun clearToken() {
@@ -27,5 +41,14 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
     }
     fun clearRole() {
         prefs.edit { remove("role") }
+    }
+    fun clearUserId(){
+        prefs.edit { remove("userId") }
+    }
+    fun clearDoctorId(){
+        prefs.edit { remove("doctorId") }
+    }
+    fun clearHospitalId(){
+        prefs.edit { remove("hospitalId") }
     }
 }
