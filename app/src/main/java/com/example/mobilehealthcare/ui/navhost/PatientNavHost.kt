@@ -19,7 +19,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mobilehealthcare.ui.screens.Screen
-import com.example.mobilehealthcare.ui.screens.doctor.DoctorHome
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

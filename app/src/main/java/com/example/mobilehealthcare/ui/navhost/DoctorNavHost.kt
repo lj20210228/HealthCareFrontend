@@ -3,7 +3,6 @@ package com.example.mobilehealthcare.ui.navhost
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -15,14 +14,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import androidx.navigation.NavHost
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mobilehealthcare.ui.screens.Screen
-import com.example.mobilehealthcare.ui.screens.doctor.DoctorHome
+import com.example.mobilehealthcare.ui.screens.doctor.home.DoctorHome
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
