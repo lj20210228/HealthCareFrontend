@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mobilehealthcare.ui.screens.Screen
 import com.example.mobilehealthcare.ui.screens.doctor.home.DoctorHome
+import com.example.mobilehealthcare.ui.screens.doctor.profile.ProfileDoctor
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -48,13 +49,7 @@ fun DoctorNavHost(
 
             }
             composable(Screen.DoctorScreen.Profile.route) {
-                Box(
-
-                ){
-                    Text(
-                        "Profile"
-                    )
-                }
+                ProfileDoctor(navController)
 
 
             }

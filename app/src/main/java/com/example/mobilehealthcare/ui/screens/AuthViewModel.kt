@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobilehealthcare.domain.Hospital
+import com.example.mobilehealthcare.domain.Role
 import com.example.mobilehealthcare.models.request.LoginRequest
 import com.example.mobilehealthcare.models.request.RegisterRequest
 import com.example.mobilehealthcare.models.response.BaseResponse
@@ -49,6 +50,13 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                         body.data?.let { data ->
                             _uiState.value = AuthState.Success(data = data, message = body.message)
                             tokenStorage.saveToken(data.token)
+                            tokenStorage.saveRole(data.user.role.toString())
+                            tokenStorage.saveUserId(data.user.id.toString())
+                            tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
+                            if(data.user.role== Role.ROLE_DOCTOR){
+                                tokenStorage.saveDoctorId(data.doctor.id.toString())
+                            }
+
                         } ?: run {
                             _uiState.value = AuthState.Error("Podaci su prazni")
                         }
@@ -81,6 +89,11 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                             _uiState.value = AuthState.Success(data = data, message = body.message)
                             tokenStorage.saveToken(data.token)
                             tokenStorage.saveRole(data.user.role.toString())
+                            tokenStorage.saveUserId(data.user.id.toString())
+                            tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
+                            if(data.user.role== Role.ROLE_DOCTOR){
+                                tokenStorage.saveDoctorId(data.doctor.id.toString())
+                            }
                         } else {
                             _uiState.value = AuthState.Error("Data je null")
                         }

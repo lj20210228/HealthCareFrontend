@@ -1,5 +1,6 @@
 package com.example.mobilehealthcare.ui.screens.register
 
+import android.app.Activity
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
@@ -252,9 +253,8 @@ fun RegisterScreen(
         is AuthState.Success -> {
             LaunchedEffect(Unit) {
                 Toast.makeText(context, "Uspešna registracija", Toast.LENGTH_SHORT).show()
-                navController.navigate("home") {
-                    popUpTo("home") { inclusive = true }
-                }
+                (context as? Activity)?.recreate()
+
             }
         }
 

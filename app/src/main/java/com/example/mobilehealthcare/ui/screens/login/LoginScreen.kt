@@ -1,5 +1,6 @@
 package com.example.mobilehealthcare.ui.screens.login
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -135,6 +136,7 @@ fun LoginScreen(
             shape = RoundedCornerShape(16.dp),
             onClick = {
                 viewModel.login(LoginRequest(email,password))
+
             },
             enabled = email.isNotEmpty()&&password.isNotEmpty(),
             colors = ButtonColors(
@@ -177,9 +179,8 @@ fun LoginScreen(
         is AuthState.Success -> {
             LaunchedEffect(Unit) {
                 Toast.makeText(context, "Uspešna prijava", Toast.LENGTH_SHORT).show()
-                navController.navigate("home") {
-                    popUpTo("home") { inclusive = true }
-                }
+                (context as? Activity)?.recreate()
+
             }
         }
 
