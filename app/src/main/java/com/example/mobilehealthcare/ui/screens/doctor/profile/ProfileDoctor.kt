@@ -1,10 +1,15 @@
 package com.example.mobilehealthcare.ui.screens.doctor.profile
 
+import android.app.Activity
+import android.graphics.Color
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,19 +26,27 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobilehealthcare.R
@@ -45,236 +58,136 @@ import com.example.mobilehealthcare.domain.User
 import com.example.mobilehealthcare.domain.WorkTime
 import java.time.LocalTime
 
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ProfileDoctor(navController: NavController) {
-    val user= User(
-        email = "user@gmail.com",
-        password ="dladpqnqnx",
-        role = Role.ROLE_DOCTOR,
-    )
-    val doctor= Doctor(
+fun ProfileDoctor(navController: NavController, viewModel: ProfileDoctorViewModel = hiltViewModel()) {
 
-        fullName = "Jovana Markovic",
-        specialization = "Neurolog",
-        maxPatients = 40,
-        currentPatients = 12,
-        isGeneral = false
-    )
-    val hospital= Hospital(
-        name = "Klinicki centar Srbije",
-        city = "Beograd",
-        address = "Pasterova 3",
-        id = "1"
-    )
-    val workTime1= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.MONDAY,
-        id = "1"
-    )
-    val workTime2= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.TUESDAY,
-        id = "1"
-    )
-    val workTime3= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.WEDNESDAY,
-        id = "1"
-    )
-    val workTime4= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.THURSDAY,
-        id = "1"
-    )
-    val workTime5= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.FRIDAY,
-        id = "1"
-    )
-    val workTime6= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.SATURDAY,
-        id = "1"
-    )
-    val workTime7= WorkTime(
-        startTime = LocalTime.of(8, 0),
-        endTime = LocalTime.of(15, 0),
-        doctorId = "1",
-        dayInWeek = DayInWeek.SUNDAY,
-        id = "1"
-    )
-    val list=listOf(workTime1,workTime2,workTime3,workTime4,workTime5,workTime6,workTime7)
+    var doctor by remember { mutableStateOf<Doctor?>(null) }
+    var user by remember { mutableStateOf<User?>(null) }
+    var hospital by remember { mutableStateOf<Hospital?>(null) }
+    var workTime by remember { mutableStateOf<List<WorkTime>>(emptyList()) }
+
+    val context = LocalContext.current
+    val uiState = viewModel.uiState.collectAsState().value
+    Log.d("UiState", uiState.toString())
+
+    when (uiState) {
+        is ProfileDoctorUiState.Nothing -> { }
+        is ProfileDoctorUiState.Error -> {
+            Toast.makeText(context, uiState.message ?: "Greška", Toast.LENGTH_SHORT).show()
+        }
+        is ProfileDoctorUiState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        is ProfileDoctorUiState.Success -> {
+            doctor = uiState.doctor
+            user = uiState.user
+            hospital = uiState.hospital
+            workTime = uiState.workTime
+        }
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp),
-
     ) {
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            val initials = doctor.fullName
+        doctor?.let { d ->
+            val initials = d.fullName
                 .trim()
                 .split(" ")
                 .filter { it.isNotBlank() }
                 .take(2)
                 .joinToString("") { it.first().uppercase() }
 
-
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
                     text = initials,
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        .background(color = MaterialTheme.colorScheme.primary)
                         .padding(24.dp)
                 )
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = doctor.fullName,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = doctor.specialization,
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-            Button(
-                onClick = {},
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(2.dp, MaterialTheme.colorScheme.tertiaryContainer),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                ),
-                modifier = Modifier.height(32.dp)
 
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(text = d.fullName, style = MaterialTheme.typography.titleMedium)
+                    Text(text = d.specialization ?: "-", style = MaterialTheme.typography.labelMedium)
+                }
 
-            ) {
-                Text(
-                    text = "Izmeni",
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Button(
+                    onClick = {},
+                    shape = RoundedCornerShape(8.dp),
+                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.tertiaryContainer),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text(text = "Izmeni", style = MaterialTheme.typography.bodySmall)
+                }
             }
 
-
-        }
-        Divider(modifier = Modifier.padding(vertical = 46.dp), thickness = 2.dp, color = androidx.compose.ui.graphics.Color.LightGray)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 12.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.mail),
-                contentDescription = null,
-                modifier = Modifier.padding(end=8.dp)
-                    .size(16.dp)
+            Divider(
+                modifier = Modifier.padding(vertical = 46.dp),
+                thickness = 2.dp,
+                color = androidx.compose.ui.graphics.Color.LightGray
             )
-            Column {
-                Text(
-                    text="Email",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = user.email,
-                    style = MaterialTheme.typography.bodyMedium
-
-
-                )
-            }
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 12.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.hospital),
-                contentDescription = null,
-                modifier = Modifier.padding(end=8.dp)
-                    .size(16.dp)
-            )
-            Column {
-                Text(
-                    text="Bolnica",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = hospital.name+", "+hospital.city,
-                    style = MaterialTheme.typography.bodyMedium
 
-
-                )
-            }
+        user?.let { u ->
+            InfoRow(icon = R.drawable.mail, title = "Email", value = u.email ?: "-")
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 12.dp)
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.stethoscope),
-                contentDescription = null,
-                modifier = Modifier.padding(end=8.dp)
-                    .size(16.dp)
-            )
-            Column {
-                Text(
-                    text="Specijalizacija",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = doctor.specialization,
-                    style = MaterialTheme.typography.bodyMedium
 
-
-                )
-            }
+        hospital?.let { h ->
+            InfoRow(icon = R.drawable.hospital, title = "Bolnica", value = "${h.name ?: "-"}, ${h.city ?: "-"}")
         }
+
+        doctor?.let { d ->
+            InfoRow(icon = R.drawable.stethoscope, title = "Specijalizacija", value = d.specialization ?: "-")
+        }
+
         Spacer(Modifier.size(32.dp))
 
-        StatisticCart(
-            patients = doctor.currentPatients,
-            termins = 32
-        )
+        doctor?.let { d ->
+            StatisticCart(patients = d.currentPatients ?: 0, termins = 32)
+        }
 
         Spacer(Modifier.size(32.dp))
-        WorkTimeCart(
-            doctor=doctor,
-            list
-        )
+
+        doctor?.let { d ->
+            WorkTimeCart(doctor = d, workTimeList = workTime)
+        }
+
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
-            onClick = {
+            onClick = { viewModel.logout()
+                (context as? Activity)?.recreate()
 
             },
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
         ) {
-            Text(
-                "Izloguj se"
-            )
+            Text("Izloguj se")
         }
-
-
+    }
+}
+@Composable
+fun InfoRow(icon: Int, title: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 12.dp)) {
+        Icon(painter = painterResource(icon), contentDescription = null, modifier = Modifier.padding(end = 8.dp).size(16.dp))
+        Column {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(text = value, style = MaterialTheme.typography.bodyMedium)
+        }
     }
 }
 @Composable
