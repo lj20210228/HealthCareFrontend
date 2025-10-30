@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.mobilehealthcare"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -60,7 +60,6 @@ dependencies {
 
     implementation("io.ktor:ktor-client-core:2.3.5")
     implementation("io.ktor:ktor-client-cio:2.3.5")
-// engine za Android
     implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
@@ -81,7 +80,6 @@ dependencies {
     kapt ("com.google.dagger:hilt-android-compiler:2.57.2")
 
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
-    // ViewModel support
     implementation ("androidx.hilt:hilt-lifecycle-viewmodel:1.3.0")
     kapt ("androidx.hilt:hilt-compiler:1.3.0")
 }
