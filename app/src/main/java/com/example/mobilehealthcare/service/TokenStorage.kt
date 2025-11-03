@@ -23,6 +23,9 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
     fun saveDoctorId(doctorId: String) {
         prefs.edit { putString("doctorId", doctorId) }
     }
+    fun savePatientId(patientId: String) {
+        prefs.edit { putString("patientId", patientId) }
+    }
     fun saveHospitalId(hospitalId: String) {
         prefs.edit { putString("hospitalId", hospitalId) }
     }
@@ -33,6 +36,8 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
     fun getDoctorId(): String?=prefs.getString("doctorId",null)
 
     fun getHospitalId(): String?=prefs.getString("hospitalId",null)
+    fun getPatientId(): String?=prefs.getString("patientId",null)
+
 
 
 
@@ -50,5 +55,8 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
     }
     fun clearHospitalId(){
         prefs.edit { remove("hospitalId") }
+    }
+    fun clearPatientId(){
+        prefs.edit {remove("patientId") }
     }
 }
