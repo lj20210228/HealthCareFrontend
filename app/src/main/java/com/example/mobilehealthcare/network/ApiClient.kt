@@ -4,6 +4,8 @@ import com.example.mobilehealthcare.domain.WorkTime
 import com.example.mobilehealthcare.service.AuthService
 import com.example.mobilehealthcare.service.DoctorService
 import com.example.mobilehealthcare.service.HospitalService
+import com.example.mobilehealthcare.service.PatientService
+import com.example.mobilehealthcare.service.TerminService
 import com.example.mobilehealthcare.service.UserService
 import com.example.mobilehealthcare.service.WorkTimeService
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -104,5 +106,13 @@ object ApiClient {
     @Singleton
     fun provideWorkTimeService(@Named("AuthRetrofit") retrofit: Retrofit): WorkTimeService =
         retrofit.create(WorkTimeService::class.java)
+    @Provides
+    @Singleton
+    fun providePatientService(@Named("AuthRetorfit")retrofit: Retrofit): PatientService=
+        retrofit.create(PatientService::class.java)
+    @Provides
+    @Singleton
+    fun provideTerminService(@Named("AuthRetorfit")retrofit: Retrofit): TerminService=
+        retrofit.create(TerminService::class.java)
 }
 
