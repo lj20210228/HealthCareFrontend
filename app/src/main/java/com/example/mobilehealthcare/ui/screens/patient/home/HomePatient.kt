@@ -1,5 +1,6 @@
 package com.example.mobilehealthcare.ui.screens.patient.home
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
@@ -27,6 +28,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,6 +55,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Patient
 import com.example.mobilehealthcare.domain.Recipe
@@ -60,67 +64,50 @@ import com.example.mobilehealthcare.domain.TerminStatus
 import java.time.LocalDate
 import java.time.LocalTime
 
+@SuppressLint("SuspiciousIndentation")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HomePatientScreen() {
+fun HomePatientScreen(
+    viewModel: HomePatientViewModel= hiltViewModel()
+) {
+  val uiState by viewModel.uiState.collectAsState()
+    when{
+        uiState.isLoading->{
+            Box(modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center){
+                CircularProgressIndicator()
+            }
+        }
+        uiState.error!=null->{
+            Box(modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center){
+                Text(
+                    text = uiState.error?:"Greska",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = Color.Red
+                )
+            }
+        }else->{
+            HomePatientContent(
+                patient = uiState.patient!!,
+                termins = uiState.termins,
+                recipes = uiState.recipes
+            )
+        }
+    }
+}
+@Composable
+fun HomePatientContent(
+    patient: Patient,
+    recipes: List<Recipe>,
+    termins: List<Termin>
+){
     var showAll by remember { mutableStateOf(false) }
     var showAllRecipes by remember { mutableStateOf(false) }
-
-    val patient = Patient(
-        fullName = "Petar Petrovic",
-        hospitalId = "2",
-        jmbg = "102234422424"
-    )
-
-    val termin1 = Termin(
-        date = LocalDate.of(2025, 10, 14),
-        startTime = LocalTime.of(10, 0),
-        status = TerminStatus.PENDING,
-        desctiption = "Kontrola"
-    )
-    val termin2 = Termin(
-        date = LocalDate.of(2025, 10, 12),
-        startTime = LocalTime.of(12, 0),
-        status = TerminStatus.ON_HOLD,
-        desctiption = "Analiza rezultata"
-    )
-    val termin3 = Termin(
-        date = LocalDate.of(2025, 11, 13),
-        startTime = LocalTime.of(14, 0),
-        status = TerminStatus.SCHEDULDED,
-        desctiption = "Pregled"
-    )
-    val termins = listOf(termin1, termin2, termin3)
-    val displayedTermins = if (showAll) termins else termins.take(2)
-    val recipe1= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Brufen",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(2025,12,12),
-        id = "1"
-    )
-    val recipe2= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Tegretol",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(2025,12,12),
-        id = "1"
-    )
-    val recipe3= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Amoksicilin",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(2025,12,12),
-        id = "1"
-    )
-    val recipes=listOf(recipe1,recipe2,recipe3)
+    val displayedTermins=if (showAll)termins else termins.take(2)
     val displayedRecipes=if (showAllRecipes)recipes else recipes.take(2)
+
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -179,7 +166,7 @@ fun HomePatientScreen() {
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("+", style = MaterialTheme.typography.displaySmall)
-                        Text("Dodaj Novi Termin", style = MaterialTheme.typography.bodyMedium)
+                        Text("Zakaži Novi Termin", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
 
@@ -228,12 +215,23 @@ fun HomePatientScreen() {
             Spacer(modifier = Modifier.size(16.dp))
         }
 
-        items(displayedTermins) { termin ->
-            CardForTerminsPatients(
-                termin = termin,
-                name = "Petar Petrovic"
-            )
+
+        if (displayedTermins.isNotEmpty()){
+            items(displayedTermins) { termin ->
+                CardForTerminsPatients(
+                    termin = termin,
+                    name = "Petar Petrovic"
+                )
+            }
+        }else{
+            item {
+                Text(
+                    "Nemate zakazanih termina",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
         }
+
 
         item {
             Spacer(modifier = Modifier.size(24.dp))
@@ -258,13 +256,23 @@ fun HomePatientScreen() {
             }
             Spacer(modifier = Modifier.size(16.dp))
         }
-
-        items(displayedRecipes) { recipe ->
-            RecipeCart(
-                recipe = recipe,
-                doctorName = "Ana Ivanovic",
-            )
+        if (displayedRecipes.isNotEmpty()){
+            items(displayedRecipes) { recipe ->
+                RecipeCart(
+                    recipe = recipe,
+                    doctorName = "Ana Ivanovic",
+                )
+            }
+        }else{
+            item {
+                Text(
+                    "Nemate recepata",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+            }
         }
+
+
 
         item { Spacer(modifier = Modifier.size(40.dp)) }
     }
@@ -518,6 +526,7 @@ fun CardForTerminsPatients(
     }
 
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartialBottomSheet(
@@ -674,14 +683,11 @@ fun PartialBottomSheet(
 @Preview
 fun HomePatientPreview(){
 
-    val recipe1= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Brufen",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(12,12,2025),
-        id = "1"
-    )
-    RecipeCart(recipe = recipe1,"Petar Petrovic")
+
+    HomePatientContent(patient= Patient(
+        fullName = "Petar Petrovic",
+        userId = "2",
+        hospitalId = "2",
+        jmbg = "100310220318",
+    ),emptyList(),emptyList())
 }

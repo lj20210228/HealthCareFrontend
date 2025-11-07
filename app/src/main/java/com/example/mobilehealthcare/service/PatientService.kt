@@ -9,6 +9,9 @@ import retrofit2.http.Path
 interface PatientService {
     @GET("/patient/{id}")
     suspend fun getPatient(@Path("id") id: String): Response<BaseResponse<Patient>>
+    @GET("/patient/userId/{userId}")
+    suspend fun getPatientByUserId(@Path("userId") userId: String): Response<BaseResponse<Patient>>
+
 
 
 }

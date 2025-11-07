@@ -55,8 +55,7 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                             tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
                             if(data.user.role== Role.ROLE_DOCTOR){
                                 tokenStorage.saveDoctorId(data.doctor.id.toString())
-                            }else if (data.user.role== Role.ROLE_PATIENT)
-                                tokenStorage.savePatientId(data.patient?.id.toString())
+                            }else tokenStorage.savePatientId(data.patient?.id.toString())
 
                         } ?: run {
                             _uiState.value = AuthState.Error("Podaci su prazni")
@@ -94,8 +93,9 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                             tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
                             if(data.user.role== Role.ROLE_DOCTOR){
                                 tokenStorage.saveDoctorId(data.doctor.id.toString())
-                            }else if (data.user.role== Role.ROLE_PATIENT)
+                            }else {
                                 tokenStorage.savePatientId(data.patient?.id.toString())
+                            }
 
                         } else {
                             _uiState.value = AuthState.Error("Data je null")
