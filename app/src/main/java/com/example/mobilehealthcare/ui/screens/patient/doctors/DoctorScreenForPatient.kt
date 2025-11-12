@@ -1,5 +1,6 @@
 package com.example.mobilehealthcare.ui.screens.patient.doctors
 
+import android.app.Activity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -33,11 +36,20 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonColors
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,108 +57,79 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Doctor
 import com.example.mobilehealthcare.domain.Hospital
+import com.example.mobilehealthcare.domain.SelectedDoctor
 import com.example.mobilehealthcare.domain.Termin
 import com.example.mobilehealthcare.domain.TerminStatus
 import java.time.LocalDate
 import java.time.LocalTime
 
+@Composable
+fun DoctorScreenForPatients(
+    viewModel: DoctorScreenForPatientViewModel= hiltViewModel()
+){
+    val uiState by viewModel.uiState.collectAsState()
+    when{
+        uiState.isLoading->{
+            Box(modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center){
+                CircularProgressIndicator()
+            }
+        }
+        uiState.error!=null->{
+            Box(modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center){
+                Text(
+                    text = uiState.error?:"Greska",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = Color.Red
+                )
+            }
+        }
+        else->{
+            DoctorScreenForPatientsContent(
+                myDoctors = uiState.myDoctors,
+                allDoctors = uiState.allDoctors,
+                hospital =uiState.hospital!!,
+                {viewModel.logout()},
+                viewModel
+
+            )
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DoctorScreenForPatients() {
+fun DoctorScreenForPatientsContent(
+    myDoctors:List<Pair<Doctor,List< Termin?>>>,
+    allDoctors:List<Pair<Doctor, List<Termin?>>>,
+    hospital: Hospital
+    ,logout:()-> Unit,
+    viewModel: DoctorScreenForPatientViewModel
+
+) {
     var selectedIndex by remember { mutableStateOf(0) }
-    val options=listOf("Moji","Preporučeni")
-    val doctor1= Doctor(
-
-        fullName = "Jovan Jovanovic",
-        specialization = "Kardiolog",
-        maxPatients =40,
-        currentPatients = 10,
-        hospitalId = "1",
-        isGeneral =false
-    )
-    val doctor2= Doctor(
-
-        fullName = "Ivan Petrovic",
-        specialization = "Neurolog",
-        maxPatients =40,
-        currentPatients = 10,
-        hospitalId = "1",
-        isGeneral =false
-    )
-    val doctor3= Doctor(
-
-        fullName = "Petar Jovanovic",
-        specialization = "Lekar opste prakse",
-        maxPatients =40,
-        currentPatients = 10,
-        hospitalId = "1",
-        isGeneral =true
-    )
-    val doctor4= Doctor(
-
-        fullName = "Ivan Jovanovic",
-        specialization = "Dermatolog",
-        maxPatients =40,
-        currentPatients = 10,
-        hospitalId = "1",
-        isGeneral =true
-    )
-    val hospital= Hospital(
-
-        name = "Klinicki Centar",
-        city = "Beograd",
-        address = "Kneza Milosa 4",
-        id="1"
-    )
-    val termin= Termin(
-
-        date = LocalDate.of(2025,12,11),
-        startTime = LocalTime.of(8,0),
-        endTime = LocalTime.of(9,0),
-        hospitalId = "1",
-        status = TerminStatus.SCHEDULDED,
-        desctiption = "Pregled"
-    )
-    val termin2= Termin(
-
-        date = LocalDate.of(2025,12,11),
-        startTime = LocalTime.of(9,0),
-        endTime = LocalTime.of(10,0),
-        hospitalId = "1",
-        status = TerminStatus.ON_HOLD,
-        desctiption = "Kontrola"
-    )
-    val termin3= Termin(
-
-        date = LocalDate.of(2025,12,11),
-        startTime = LocalTime.of(11,0),
-        endTime = LocalTime.of(13,0),
-        hospitalId = "1",
-        status = TerminStatus.PENDING,
-        desctiption = "Snimanje"
-    )
-    val doctors=listOf(doctor1,doctor2,doctor3,doctor4)
-    val termins=listOf(termin,termin2,termin)
-
-    var searchQuery by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
-    val filteredItems=doctors.filter { it.fullName.contains(searchQuery, ignoreCase = true) }
+    val options=listOf("Moji","Svi")
 
     Column(
         modifier = Modifier
@@ -187,37 +170,138 @@ fun DoctorScreenForPatients() {
 
 
 
-        DoctorSearchBar(
+       /* DoctorSearchBar(
             searchQuery = searchQuery,
             onQueryChange = { searchQuery = it
                 if(it.isNotEmpty())active=true},
             active = active,
             onActiveChange = { active = it },
             filteredItems = filteredItems
-        )
-        Spacer(Modifier.size(32.dp))
-
-
-        LazyColumn {
-            items(doctors){
-                DoctorCardForPatient(
-                    it,
-                    hospital,
-                    termin
+        )*/
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier.fillMaxWidth()
+                .padding(vertical = 16.dp)
+        ){
+            options.forEachIndexed { index, label ->
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size
+                    ),
+                    icon = {},
+                    onClick = { selectedIndex = index },
+                    selected = index == selectedIndex,
+                    label = { Text(label) },
+                    colors = SegmentedButtonColors(
+                        activeContainerColor = Color.White,
+                        activeContentColor = Color.Black,
+                        activeBorderColor = Color.LightGray,
+                        inactiveContainerColor =Color.LightGray.copy(0.7f
+                        ),
+                        inactiveContentColor = Color.Black,
+                        inactiveBorderColor = Color.LightGray,
+                        disabledActiveContainerColor = Color.Transparent,
+                        disabledActiveContentColor =Color.Transparent,
+                        disabledActiveBorderColor = Color.Transparent,
+                        disabledInactiveContainerColor = Color.Transparent,
+                        disabledInactiveContentColor = Color.Transparent,
+                        disabledInactiveBorderColor = Color.Transparent
+                    )
                 )
             }
+        }
+
+        Spacer(Modifier.size(32.dp))
+
+        LazyColumn {
+            if (selectedIndex==0){
+                if (myDoctors.isEmpty()){
+                    item {
+                        Text(
+                            text ="Nemate izabranih lekara",
+                            style = MaterialTheme.typography.headlineMedium
+                            )
+                    }
+
+
+                }else{
+                    items(myDoctors){
+                        DoctorCardForPatient(
+                            it.first,
+                            hospital,
+                            it.second.firstOrNull(),
+                            myDoctor = true,
+                            {},
+                            {},
+                            allTermins = it.second
+                        )
+                    }
+                }
+
+            }else{
+                if (allDoctors.isEmpty()){
+                    item {
+                        Text(
+                            text ="Nema lekara u ovoj bolnici",
+                            style = MaterialTheme.typography.headlineMedium
+                        )
+                    }
+
+
+                }else{
+                    items(allDoctors){
+                        DoctorCardForPatient(
+                            it.first,
+                            hospital,
+                            it.second.firstOrNull(),
+                            myDoctor = false,
+                            {},
+                            {doctor->
+                                viewModel.addSelectedDoctor(
+                                    SelectedDoctor(
+                                        doctorId = doctor.id!!,
+                                        patientId = viewModel.patientId!!
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+
+            }
+
+        }
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                logout()
+
+            },
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text("Izloguj se")
         }
 
 
     }
 
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorCardForPatient(
     doctor: Doctor,
     hospital: Hospital,
-    termin: Termin
+    termin: Termin?,
+    myDoctor: Boolean,
+    onTerminClick:(Termin)->Unit,
+    onChooseDoctor:(Doctor)-> Unit,
+    allTermins: List<Termin?> =emptyList()
 ){
+    var showBottomSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false,
+    )
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -288,39 +372,84 @@ fun DoctorCardForPatient(
                         ,
                     tint = Color.Blue
                 )
-                Text(
-                    text = "Sledeći slobodan termin je ${termin.date}, ${termin.startTime}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color=Color.Blue
-
-                )
-            }
-
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary,
-                )
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.calendar),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(16.dp)
+                if (termin!=null){
+                    Text(
+                        text = "Sledeći slobodan termin je ${termin.date}, ${termin.startTime}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color=Color.Blue
 
                     )
+                }else{
                     Text(
-                        text="Zakaži termin",
-                        style = MaterialTheme.typography.titleSmall
+                        text = "Lekar nema slobodnih termina",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color=Color.Blue
+
                     )
                 }
+
             }
+
+            if (
+                myDoctor
+            ){
+                Button(
+                    onClick = {
+                        showBottomSheet=true
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                    )
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.calendar),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(16.dp)
+
+                        )
+                        Text(
+                            text= "Zakaži termin" ,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                }
+            }else{
+                Button(
+                    onClick = {
+                        onChooseDoctor(doctor)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                    )
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.stethoscope),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(16.dp)
+
+                        )
+                        Text(
+                            text= "Izaberite lekara kao izabranog" ,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                }
+            }
+
 
 
         }
@@ -328,7 +457,51 @@ fun DoctorCardForPatient(
 
 
     }
+    if (showBottomSheet){
+        PartialBottomSheetForTermins(
+          sheetState=sheetState,
+            onDissmisRequest = {showBottomSheet=false},
+            termins = allTermins,
+            onTerminClick = onTerminClick
+        )
+    }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PartialBottomSheetForTermins(
+    termins: List<Termin?>,
+    sheetState: SheetState,
+    onDissmisRequest:()-> Unit,
+    onTerminClick: (Termin) -> Unit
+) {
+    ModalBottomSheet(
+        modifier = Modifier.fillMaxHeight(),
+        sheetState = sheetState,
+        onDismissRequest = { onDissmisRequest() }
+    ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(
+
+            ).padding(16.dp)
+        ) {
+           item {
+               Text(
+                   modifier = Modifier.align(Alignment.CenterHorizontally),
+                   text = "Slobodni termini",
+                   style = MaterialTheme.typography.titleMedium
+
+                   )
+           }
+            items(termins){termin->
+                Row {
+
+                }
+
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorSearchBar(
@@ -348,7 +521,6 @@ fun DoctorSearchBar(
             active = active,
             onActiveChange = onActiveChange,
             modifier = Modifier
-                .padding(start = 12.dp, top = 2.dp, end = 12.dp, bottom = 12.dp)
                 .fillMaxWidth(),
             placeholder = { Text("Pretraži lekare") },
         ) {
@@ -383,5 +555,4 @@ fun DoctorSearchBar(
 @Composable
 @Preview
 fun Preview(){
-    DoctorScreenForPatients()
 }

@@ -16,6 +16,7 @@ import com.example.mobilehealthcare.models.response.RegisterResponse
 import com.example.mobilehealthcare.service.AuthService
 import com.example.mobilehealthcare.service.HospitalService
 import com.example.mobilehealthcare.service.TokenStorage
+import com.example.mobilehealthcare.ui.screens.shared.AuthStatusViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,7 +26,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(val authService: AuthService,val
-                                        hospitalService: HospitalService,val tokenStorage: TokenStorage): ViewModel() {
+                                        hospitalService: HospitalService,val tokenStorage: TokenStorage,
+    private val authStatusViewModel: AuthStatusViewModel): ViewModel() {
     private val _uiState= MutableStateFlow<AuthState>(AuthState.Nothing)
     val uiState=_uiState.asStateFlow()
 
@@ -52,10 +54,16 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                             tokenStorage.saveToken(data.token)
                             tokenStorage.saveRole(data.user.role.toString())
                             tokenStorage.saveUserId(data.user.id.toString())
-                            tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
                             if(data.user.role== Role.ROLE_DOCTOR){
-                                tokenStorage.saveDoctorId(data.doctor.id.toString())
-                            }else tokenStorage.savePatientId(data.patient?.id.toString())
+                                tokenStorage.saveDoctorId(data.doctor?.id.toString())
+                                tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
+
+                            }else{
+                                tokenStorage.savePatientId(data.patient?.id.toString())
+                                tokenStorage.saveHospitalId(data.patient?.hospitalId!!)
+
+                            }
+                            authStatusViewModel.updateAuthStatus()
 
                         } ?: run {
                             _uiState.value = AuthState.Error("Podaci su prazni")
@@ -90,13 +98,16 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                             tokenStorage.saveToken(data.token)
                             tokenStorage.saveRole(data.user.role.toString())
                             tokenStorage.saveUserId(data.user.id.toString())
-                            tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
                             if(data.user.role== Role.ROLE_DOCTOR){
-                                tokenStorage.saveDoctorId(data.doctor.id.toString())
-                            }else {
-                                tokenStorage.savePatientId(data.patient?.id.toString())
-                            }
+                                tokenStorage.saveDoctorId(data.doctor?.id.toString())
+                                tokenStorage.saveHospitalId(data.doctor?.hospitalId!!)
 
+                            }else{
+                                tokenStorage.savePatientId(data.patient?.id.toString())
+                                tokenStorage.saveHospitalId(data.patient?.hospitalId!!)
+
+                            }
+                            authStatusViewModel.updateAuthStatus()
                         } else {
                             _uiState.value = AuthState.Error("Data je null")
                         }

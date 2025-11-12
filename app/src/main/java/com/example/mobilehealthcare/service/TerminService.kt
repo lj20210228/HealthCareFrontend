@@ -11,4 +11,9 @@ interface TerminService {
     @GET("/termin/patient/{id}")
     suspend fun getAllTerminsForPatient(@Path("id") id: String): Response<ListResponse<Termin>>
 
+    @GET("/termin/doctor/{id}")
+    suspend fun getAllTerminsForDoctor(@Path("id") id: String): Response<ListResponse<Termin>>
+
+
+
 }

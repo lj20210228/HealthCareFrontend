@@ -32,14 +32,13 @@ class HomePatientViewModel @Inject constructor (
 ): ViewModel(){
     private val _uiState= MutableStateFlow(HomePatientUiState())
     val uiState=_uiState.asStateFlow()
-    val patientId=tokenStorage.getPatientId()
     val userId=tokenStorage.getUserId()
 
 
     init {
-        loadPatientsata()
+        loadPatient()
     }
-    private fun loadPatientsata(){
+    private fun loadPatient(){
         viewModelScope.launch {
 
             try {
@@ -57,6 +56,9 @@ class HomePatientViewModel @Inject constructor (
                     }
                     is BaseResponse.SuccessResponse->{
                         _uiState.update { it.copy(patient=patientResponse.data) }
+                        tokenStorage.savePatientId(patientResponse.data?.id!!)
+                        Log.d("SavePatientId",tokenStorage.getPatientId()!!)
+
                         val termins=terminService.getAllTerminsForPatient(patientResponse.data?.id!!)
                         Log.d("Termins",termins.toString())
                         val recipes=recipeService.getAllRecipesForPatient(patientResponse.data.id)

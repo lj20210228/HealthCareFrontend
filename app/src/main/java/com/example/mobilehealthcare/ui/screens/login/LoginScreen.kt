@@ -44,9 +44,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mobilehealthcare.R
+import com.example.mobilehealthcare.domain.Role
 import com.example.mobilehealthcare.models.request.LoginRequest
 import com.example.mobilehealthcare.ui.screens.AuthState
 import com.example.mobilehealthcare.ui.screens.AuthViewModel
+import com.example.mobilehealthcare.ui.screens.Screen
 
 
 @Composable
@@ -179,7 +181,6 @@ fun LoginScreen(
         is AuthState.Success -> {
             LaunchedEffect(Unit) {
                 Toast.makeText(context, "Uspešna prijava", Toast.LENGTH_SHORT).show()
-                (context as? Activity)?.recreate()
 
             }
         }

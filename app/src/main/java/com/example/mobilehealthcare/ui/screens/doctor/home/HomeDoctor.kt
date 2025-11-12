@@ -637,6 +637,6 @@ fun HomePreview(){
 
         )
 
-    CardForTermins(termin,"Marko Markovic",{})
+    DoctorHome()
 }
 

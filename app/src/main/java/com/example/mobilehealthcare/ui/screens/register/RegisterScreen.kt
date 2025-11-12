@@ -71,6 +71,7 @@ import com.example.mobilehealthcare.domain.User
 import com.example.mobilehealthcare.models.request.RegisterRequest
 import com.example.mobilehealthcare.ui.screens.AuthState
 import com.example.mobilehealthcare.ui.screens.AuthViewModel
+import com.example.mobilehealthcare.ui.screens.Screen
 
 private val passwordRegex = Regex("^(?=.*[A-Z])(?=.*\\d)(?=.*[!@#\$%^&*()_+\\-={}\\[\\]:;\"'<>,.?/]).{8,}\$")
 fun isValidPassword(password: String): Boolean {
@@ -253,7 +254,7 @@ fun RegisterScreen(
         is AuthState.Success -> {
             LaunchedEffect(Unit) {
                 Toast.makeText(context, "Uspešna registracija", Toast.LENGTH_SHORT).show()
-                (context as? Activity)?.recreate()
+
 
             }
         }

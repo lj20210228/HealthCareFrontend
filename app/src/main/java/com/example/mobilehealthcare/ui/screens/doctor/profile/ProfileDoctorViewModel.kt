@@ -17,6 +17,7 @@ import com.example.mobilehealthcare.service.TokenStorage
 import com.example.mobilehealthcare.service.UserService
 import com.example.mobilehealthcare.service.WorkTimeService
 import com.example.mobilehealthcare.ui.screens.doctor.profile.ProfileDoctorUiState.*
+import com.example.mobilehealthcare.ui.screens.shared.AuthStatusViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +27,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ProfileDoctorViewModel @Inject constructor(val hospitalService: HospitalService,
     val tokenStorage: TokenStorage,val doctorService: DoctorService,val workTimeService: WorkTimeService,
-    val userService: UserService
+    val userService: UserService,
+    val authStatusViewModel: AuthStatusViewModel
     ): ViewModel() {
         private val _uiState= MutableStateFlow<ProfileDoctorUiState>(ProfileDoctorUiState.Nothing)
     val uiState=_uiState.asStateFlow()
@@ -99,6 +101,11 @@ class ProfileDoctorViewModel @Inject constructor(val hospitalService: HospitalSe
             }
         }
     }
+    fun addDoctor(){
+        viewModelScope.launch {
+
+        }
+    }
      fun getHospitalById(){
          viewModelScope.launch {
              Log.d("HospitalId",hospitalId.toString())
@@ -127,6 +134,8 @@ class ProfileDoctorViewModel @Inject constructor(val hospitalService: HospitalSe
         tokenStorage.clearUserId()
         tokenStorage.clearRole()
         tokenStorage.clearHospitalId()
+        authStatusViewModel.updateAuthStatus()
+
     }
     private fun updateState(update: (ProfileDoctorUiState.Success) -> ProfileDoctorUiState.Success) {
         val current = _uiState.value
