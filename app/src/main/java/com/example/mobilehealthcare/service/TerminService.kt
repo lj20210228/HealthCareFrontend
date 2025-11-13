@@ -4,7 +4,9 @@ import com.example.mobilehealthcare.domain.Termin
 import com.example.mobilehealthcare.models.response.BaseResponse
 import com.example.mobilehealthcare.models.response.ListResponse
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface TerminService {
@@ -13,6 +15,8 @@ interface TerminService {
 
     @GET("/termin/doctor/{id}")
     suspend fun getAllTerminsForDoctor(@Path("id") id: String): Response<ListResponse<Termin>>
+    @POST("/termin/add")
+    suspend fun addTermin(@Body termin: Termin): Response<BaseResponse<Termin>>
 
 
 

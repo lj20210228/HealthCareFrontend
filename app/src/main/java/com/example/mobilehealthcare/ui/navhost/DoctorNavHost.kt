@@ -49,7 +49,7 @@ fun DoctorNavHost(
 
             }
             composable(Screen.DoctorScreen.Profile.route) {
-                ProfileDoctor(navController)
+                ProfileDoctor()
 
 
             }

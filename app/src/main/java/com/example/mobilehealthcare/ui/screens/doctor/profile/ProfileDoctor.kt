@@ -61,7 +61,7 @@ import java.time.LocalTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ProfileDoctor(navController: NavController, viewModel: ProfileDoctorViewModel = hiltViewModel()) {
+fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
 
     var doctor by remember { mutableStateOf<Doctor?>(null) }
     var user by remember { mutableStateOf<User?>(null) }
@@ -170,7 +170,6 @@ fun ProfileDoctor(navController: NavController, viewModel: ProfileDoctorViewMode
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = { viewModel.logout()
-                (context as? Activity)?.recreate()
 
             },
             shape = RoundedCornerShape(8.dp),
@@ -267,7 +266,7 @@ fun WorkTimeCart(
                 verticalAlignment = Alignment.CenterVertically
             ) {
              Text(
-                 text = when(it.dayInWeek){
+                 text = when(it.dayIn){
                      DayInWeek.MONDAY -> "Ponedeljak"
                      DayInWeek.TUESDAY -> "Utorak"
                      DayInWeek.WEDNESDAY -> "Sreda"
@@ -309,5 +308,5 @@ fun WorkTimeCart(
 @Composable
 @Preview
 fun ProfileDoctorPreview(){
-    ProfileDoctor(navController = rememberNavController())
+    ProfileDoctor()
 }

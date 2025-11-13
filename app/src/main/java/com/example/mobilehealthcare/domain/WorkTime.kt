@@ -1,15 +1,16 @@
 package com.example.mobilehealthcare.domain
 
+import com.example.mobilehealthcare.date.StrictLocalTimeSerializer
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import java.time.LocalTime
 @Serializable
 data class WorkTime(
     val id: String,
-    @Contextual
+    @Serializable(with = StrictLocalTimeSerializer::class)
     val startTime: LocalTime,
-    @Contextual
+    @Serializable(with = StrictLocalTimeSerializer::class)
     val endTime: LocalTime,
     val doctorId: String,
-    val dayInWeek: DayInWeek
+    val dayIn: DayInWeek
 )

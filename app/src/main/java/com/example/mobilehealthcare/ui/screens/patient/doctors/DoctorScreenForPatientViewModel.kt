@@ -9,6 +9,7 @@ import com.example.mobilehealthcare.domain.Patient
 import com.example.mobilehealthcare.domain.Recipe
 import com.example.mobilehealthcare.domain.SelectedDoctor
 import com.example.mobilehealthcare.domain.Termin
+import com.example.mobilehealthcare.domain.WorkTime
 import com.example.mobilehealthcare.models.response.BaseResponse
 import com.example.mobilehealthcare.models.response.ListResponse
 import com.example.mobilehealthcare.service.DoctorService
@@ -16,6 +17,7 @@ import com.example.mobilehealthcare.service.HospitalService
 import com.example.mobilehealthcare.service.SelectedDoctorService
 import com.example.mobilehealthcare.service.TerminService
 import com.example.mobilehealthcare.service.TokenStorage
+import com.example.mobilehealthcare.service.WorkTimeService
 import com.example.mobilehealthcare.ui.screens.shared.AuthStatusViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +33,7 @@ class DoctorScreenForPatientViewModel @Inject constructor(
     val doctorService: DoctorService,
     val hospitalService: HospitalService,
     val terminService: TerminService,
+    val workTimeService: WorkTimeService,
     val authStatusViewModel: AuthStatusViewModel
 ): ViewModel() {
     val patientId=tokenStorage.getPatientId()
@@ -57,22 +60,22 @@ class DoctorScreenForPatientViewModel @Inject constructor(
             val doctorsResponse=selectedDoctorService.getAllSelectedDoctorsForPatint(patientId)
             val doctors=doctorsResponse.body()
             if (doctors is ListResponse.SuccessResponse){
-                val doctorTerminList=doctors.data?.mapNotNull { doctor->
+                val doctorWorkTimeList=doctors.data?.mapNotNull { doctor->
                     doctor?.let {
-                        val terminsResponse=terminService.getAllTerminsForDoctor(doctor.id!!)
-                        val termins=terminsResponse.body()
-                        Log.d("Termins",termins.toString())
+                        val workTimeResponse=workTimeService.getWorkTimeForDoctorId(doctor.id!!)
+                        val workTime=workTimeResponse.body()
+                        Log.d("WorkTime",workTime.toString())
 
-                        val terminList=if (termins is ListResponse.SuccessResponse){
-                            termins.data?:emptyList()
+                        val workTimeList=if (workTime is ListResponse.SuccessResponse){
+                            workTime.data?:emptyList()
                         }else emptyList()
-                        Pair(doctor,terminList)
+                        Pair(doctor,workTimeList)
 
 
                     }
                 }?:emptyList()
 
-                _uiState.update { it.copy(isLoading = false, myDoctors =doctorTerminList ) }
+                _uiState.update { it.copy(isLoading = false, myDoctors =doctorWorkTimeList ) }
             }else if(doctors is ListResponse.ErrorResponse){
                 _uiState.update{it.copy(myDoctors = emptyList(), error = doctors.message, isLoading = false)}
             }
@@ -94,22 +97,22 @@ class DoctorScreenForPatientViewModel @Inject constructor(
             Log.d("AllDoctors",doctors.toString())
 
             if (doctors is ListResponse.SuccessResponse){
-                val doctorTerminList=doctors.data?.mapNotNull { doctor->
+                val doctorWorkTimeList=doctors.data?.mapNotNull { doctor->
                     doctor?.let {
-                        val terminsResponse=terminService.getAllTerminsForDoctor(doctor.id!!)
-                        val termins=terminsResponse.body()
-                        Log.d("Termins",termins.toString())
+                        val workTimeResponse=workTimeService.getWorkTimeForDoctorId(doctor.id!!)
+                        val workTime=workTimeResponse.body()
+                        Log.d("WorkTime",workTime.toString())
 
-                        val terminList=if (termins is ListResponse.SuccessResponse){
-                            termins.data?:emptyList()
+                        val workTimeList=if (workTime is ListResponse.SuccessResponse){
+                            workTime.data?:emptyList()
                         }else emptyList()
-                        Pair(doctor,terminList)
+                        Pair(doctor,workTimeList)
 
 
                     }
                 }?:emptyList()
 
-                _uiState.update { it.copy(isLoading = false, allDoctors =doctorTerminList ) }
+                _uiState.update { it.copy(isLoading = false, allDoctors =doctorWorkTimeList ) }
             }else if(doctors is ListResponse.ErrorResponse){
                 _uiState.update{it.copy(myDoctors = emptyList(), error = doctors.message, isLoading = false)}
             }
@@ -118,15 +121,40 @@ class DoctorScreenForPatientViewModel @Inject constructor(
     }
     fun addSelectedDoctor(selectedDoctor: SelectedDoctor){
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+
             val response=selectedDoctorService.addSelectedDoctor(selectedDoctor)
             val responseBody=response.body()
             if (responseBody is BaseResponse.SuccessResponse){
+                _uiState.update { it.copy(isLoading = false) }
+                    getSelectedDoctorForPatient()
 
-                getSelectedDoctorForPatient()
+
             }
             if (responseBody is BaseResponse.ErrorResponse){
                 _uiState.update { it.copy(isLoading = false,error=responseBody.message ) }
+
+            }
+        }
+    }
+    fun addTermin(termin: Termin){
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            if (hospitalId==null)
+            {
+                _uiState.update { it.copy(error = "Greska pri ucitavanju") }
+                return@launch
+            }
+            val response=terminService.addTermin(termin)
+            Log.d("TerminResponse",response.toString())
+
+            val responseBody=response.body()
+            Log.d("TerminAdd",responseBody.toString())
+            if (responseBody is BaseResponse.SuccessResponse){
+                _uiState.update { it.copy(isLoading = false) }
+
+            }
+            if (responseBody is BaseResponse.ErrorResponse){
+                _uiState.update { it.copy(isLoading = true,error=responseBody.message) }
 
             }
 
@@ -152,8 +180,6 @@ class DoctorScreenForPatientViewModel @Inject constructor(
 
             }
             Log.d("Hospital",_uiState.value.hospital.toString())
-
-
         }
     }
     fun logout(){
@@ -169,8 +195,8 @@ class DoctorScreenForPatientViewModel @Inject constructor(
 
 data class HomePatientUiState(
     val isLoading: Boolean=true,
-    val myDoctors: List<Pair<Doctor, List<Termin?>>> =emptyList(),
-    val allDoctors: List<Pair<Doctor,List<Termin?>>> =emptyList(),
+    val myDoctors: List<Pair<Doctor, List<WorkTime?>>> =emptyList(),
+    val allDoctors: List<Pair<Doctor,List<WorkTime?>>> =emptyList(),
     val hospital: Hospital?=null,
     val error:String?=null
 )

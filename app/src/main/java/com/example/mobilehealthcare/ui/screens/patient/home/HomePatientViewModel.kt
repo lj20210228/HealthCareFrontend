@@ -23,7 +23,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomePatientViewModel @Inject constructor (
-    val userService: UserService,
     val patientService: PatientService,
     val terminService: TerminService,
     val tokenStorage: TokenStorage,
@@ -97,6 +96,9 @@ class HomePatientViewModel @Inject constructor (
             Log.d("UIState",_uiState.value.toString())
 
         }
+    }
+    fun refreshData(){
+        loadPatient()
     }
 
 }
