@@ -27,6 +27,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +43,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +59,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Doctor
 import com.example.mobilehealthcare.domain.Patient
@@ -66,43 +69,64 @@ import com.example.mobilehealthcare.ui.screens.shared.CardForStatusTerminAndDate
 import java.time.LocalDate
 import java.time.LocalTime
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DoctorHome(){
+fun DoctorHome(
+    viewModel: HomeDoctorViewModel= hiltViewModel()
+){
+    val uiState  by viewModel.uiState.collectAsState()
+    when{
+        uiState.isLoading->{
+            Box(modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center){
+                CircularProgressIndicator()
+            }
+        }
+        uiState.error!=null->{
+            Box(modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center){
+                Text(
+                    text = uiState.error?:"Greska",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = Color.Red
+                )
+            }
+        }
+        else->{
+            val numberToday=uiState.terminsWithPatient.filter {
+                it.first.date== LocalDate.now()
+            }.size
+            val numberOnHold=uiState.terminsWithPatient.filter {
+                it.first.status== TerminStatus.PENDING
+            }.size
+            val numberScheduled=uiState.terminsWithPatient.filter {
+                it.first.status== TerminStatus.SCHEDULDED
+            }.size
+            DoctorHomeContent(
+                terminsWithPatients = uiState.terminsWithPatient,
+                doctor = uiState.doctor!!,
+                numberToday = numberToday,
+                numberOnHold=numberOnHold,
+                numberAccepted = numberScheduled
+            )
+        }
+    }
+}
 
-  val doctor=  Doctor(
-        fullName = "Ana Markovic",
-        specialization = "Kardiolog",
-        maxPatients = 40,
-        currentPatients = 5,
 
-        isGeneral = false
-    )
-    val termin= Termin(
-        date = LocalDate.of(2025, 10, 14),
-        startTime = LocalTime.of(10, 0),
-        status = TerminStatus.PENDING,
-        desctiption = "Kontrola",
 
-    )
-    val termin2= Termin(
-        date = LocalDate.of(2025, 10, 12),
-        startTime = LocalTime.of(12, 0),
-        status = TerminStatus.ON_HOLD,
-        desctiption = "Analiza rezultata",
 
-        )
-    val termin3= Termin(
-        date = LocalDate.of(2025, 11, 13),
-        startTime = LocalTime.of(14, 0),
-        status = TerminStatus.SCHEDULDED,
-        desctiption = "Pregled",
 
-        )
-
+@Composable
+fun DoctorHomeContent(
+     terminsWithPatients:List<Pair<Termin,Patient>>,
+     doctor: Doctor,
+     numberToday:Int=0,
+     numberOnHold:Int=0,
+     numberAccepted:Int=0,
+     viewModel: HomeDoctorViewModel=hiltViewModel()
+){
     var selectedIndex by remember { mutableIntStateOf(0) }
     val options = listOf("Danas", "Buduci")
-    val termins=listOf<Termin>(termin,termin2,termin3)
     Column(
         modifier = Modifier
             .background(brush = Brush.radialGradient(
@@ -149,18 +173,18 @@ fun DoctorHome(){
         Row(
             modifier = Modifier.fillMaxWidth()
                 .padding(vertical = 32.dp)
-                ,
+            ,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             CardForStatusTerminAndDate(
                 status = "Danas",
-                number = 4,
+                number = numberToday,
                 modifier = Modifier.weight(1f),
                 color= MaterialTheme.colorScheme.primaryContainer
             )
             CardForStatusTerminAndDate(
                 status = "Na čekanju",
-                number = 4,
+                number = numberOnHold,
                 modifier = Modifier.weight(1f),
                 color= MaterialTheme.colorScheme.tertiaryContainer
 
@@ -168,7 +192,7 @@ fun DoctorHome(){
             )
             CardForStatusTerminAndDate(
                 status = "Potvrđeno",
-                number = 4,
+                number = numberAccepted,
                 modifier = Modifier.weight(1f),
                 color= MaterialTheme.colorScheme.secondaryContainer
 
@@ -213,26 +237,37 @@ fun DoctorHome(){
             modifier = Modifier.fillMaxWidth()
         ) {
             if (selectedIndex==0){
-                items(termins.filter {
-                    it.date== LocalDate.now()
+                items(terminsWithPatients.filter {
+                    it.first.date== LocalDate.now()
                 }){
 
                     CardForTermins(
-                        termin=it,
-                        "Marko Markovic",
-                        onClickAccept = {},
+                        termin=it.first,
+                        name=it.second.fullName,
+                        onClickAccept = {
+                            viewModel.updateTerminRequest(it.first.copy(status = TerminStatus.SCHEDULDED))
+                        },
+                        onClickRejected = {
+                            viewModel.deleteTermin(terminId = it.first.id!!)
+                        }
                     )
 
                 }
             }
             else{
-                items(termins){
-                    it.date!= LocalDate.now()
+                items(terminsWithPatients){
+                    it.first.date!= LocalDate.now()
 
                     CardForTermins(
-                        termin=it,
-                        "Marko Markovic",
-                        onClickAccept = {},
+                        termin=it.first,
+                        name=it.second.fullName,
+                        onClickAccept = {
+                            viewModel.updateTerminRequest(it.first.copy(status = TerminStatus.SCHEDULDED))
+                        },
+                        onClickRejected = {
+                            viewModel.deleteTermin(terminId = it.first.id!!)
+                        }
+
                     )
 
                 }
@@ -252,6 +287,7 @@ fun CardForTermins(
     termin: Termin,
     name: String,
     onClickAccept:()->Unit,
+    onClickRejected:()-> Unit
 ){
 
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -379,7 +415,7 @@ fun CardForTermins(
 
            }
 
-            if (termin.status== TerminStatus.SCHEDULDED||termin.status== TerminStatus.PENDING){
+            if (termin.status== TerminStatus.SCHEDULDED){
                 Button(
                     onClick = {
                         showBottomSheet=true
@@ -411,7 +447,9 @@ fun CardForTermins(
                 ) {
 
                     Button(
-                        onClick = {},
+                        onClick = {
+                            onClickAccept()
+                        },
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
                             .weight(1f)
@@ -433,6 +471,7 @@ fun CardForTermins(
                     }
                     Button(
                         onClick = {
+                            onClickRejected()
                         },
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier
@@ -623,20 +662,4 @@ fun PartialBottomSheet(
 }
 
 
-
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview
-@Composable
-fun HomePreview(){
-    val termin= Termin(
-        date = LocalDate.of(2025, 10, 29),
-        startTime = LocalTime.of(10, 0),
-        status = TerminStatus.PENDING,
-        desctiption = "Kontrola",
-
-        )
-
-    DoctorHome()
-}
 

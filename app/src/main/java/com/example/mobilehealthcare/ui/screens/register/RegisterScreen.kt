@@ -446,7 +446,6 @@ fun RegisterPatient(
             modifier= Modifier.padding(vertical = 32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp,Color.White))
-                .background(MaterialTheme.colorScheme.secondary)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             onClick = {onClick()},
@@ -648,10 +647,9 @@ fun RegisterDoctor(
             modifier= Modifier.padding(vertical = 32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp,Color.White))
-                .background(MaterialTheme.colorScheme.primary)
                 .fillMaxWidth(),
             colors = ButtonColors(
-                containerColor = MaterialTheme.colorScheme.secondary, disabledContainerColor = MaterialTheme.colorScheme.onSecondary,
+                containerColor = MaterialTheme.colorScheme.primaryContainer, disabledContainerColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 contentColor =Color.White,
                 disabledContentColor = Color.White
             ),

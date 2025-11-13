@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.compose.primaryLight
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Role
 import com.example.mobilehealthcare.models.request.LoginRequest
@@ -65,7 +67,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.secondary)
+            .background(color= primaryLight)
             .padding(vertical = 64.dp, horizontal = 32.dp)
         , horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -133,7 +135,6 @@ fun LoginScreen(
             modifier= Modifier.padding(vertical = 32.dp)
                 .clip(RoundedCornerShape(16.dp))
                 .border(shape = RoundedCornerShape(16.dp), border = BorderStroke(1.dp,Color.White))
-                .background(MaterialTheme.colorScheme.secondary)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             onClick = {

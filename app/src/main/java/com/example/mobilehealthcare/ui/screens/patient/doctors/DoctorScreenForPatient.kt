@@ -130,7 +130,6 @@ fun DoctorScreenForPatients(
                 myDoctors = uiState.myDoctors,
                 allDoctors = uiState.allDoctors,
                 hospital =uiState.hospital!!,
-                {viewModel.logout()},
                 viewModel
 
             )
@@ -142,8 +141,7 @@ fun DoctorScreenForPatients(
 fun DoctorScreenForPatientsContent(
     myDoctors:List<Pair<Doctor,List< WorkTime?>>>,
     allDoctors:List<Pair<Doctor, List<WorkTime?>>>,
-    hospital: Hospital
-    , logout:()-> Unit,
+    hospital: Hospital,
     viewModel: DoctorScreenForPatientViewModel
 
 ) {
@@ -298,7 +296,7 @@ fun DoctorScreenForPatientsContent(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp),
                     onClick = {
-                        logout()
+                        viewModel.logout()
 
                     },
                     shape = RoundedCornerShape(8.dp),
