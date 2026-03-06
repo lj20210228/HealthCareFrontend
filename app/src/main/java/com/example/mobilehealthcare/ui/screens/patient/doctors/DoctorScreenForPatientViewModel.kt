@@ -21,10 +21,14 @@ import com.example.mobilehealthcare.service.WorkTimeService
 import com.example.mobilehealthcare.ui.screens.shared.AuthStatusViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.collections.emptyList
 
 @HiltViewModel
 class DoctorScreenForPatientViewModel @Inject constructor(
@@ -144,6 +148,7 @@ class DoctorScreenForPatientViewModel @Inject constructor(
                 _uiState.update { it.copy(error = "Greska pri ucitavanju") }
                 return@launch
             }
+            Log.d("TerminRequest",termin.toString())
             val response=terminService.addTermin(termin)
             Log.d("TerminResponse",response.toString())
 
@@ -154,9 +159,10 @@ class DoctorScreenForPatientViewModel @Inject constructor(
 
             }
             if (responseBody is BaseResponse.ErrorResponse){
-                _uiState.update { it.copy(isLoading = true,error=responseBody.message) }
+                _uiState.update { it.copy(isLoading = false,error=responseBody.message) }
 
             }
+            _uiState.update { it.copy(isLoading = false) }
 
         }
     }
@@ -191,6 +197,7 @@ class DoctorScreenForPatientViewModel @Inject constructor(
         authStatusViewModel.updateAuthStatus()
 
     }
+
 }
 
 data class HomePatientUiState(

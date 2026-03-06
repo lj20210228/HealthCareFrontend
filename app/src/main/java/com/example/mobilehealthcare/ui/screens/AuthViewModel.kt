@@ -117,7 +117,7 @@ class AuthViewModel @Inject constructor(val authService: AuthService,val
                     }
                 }
             } else {
-                _uiState.value = AuthState.Error("Body je null")
+                _uiState.value = AuthState.Error(response.message())
             }
 
         }

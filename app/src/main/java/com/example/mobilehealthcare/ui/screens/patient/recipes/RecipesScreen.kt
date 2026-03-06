@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -39,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Recipe
 import com.example.mobilehealthcare.ui.screens.patient.home.RecipeCart
@@ -47,50 +50,57 @@ import java.time.LocalDate
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun PatientRecipesScreen(){
+fun PatientRecipesScreen(
+    viewModel: RecipesViewModel= hiltViewModel()
+){
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    if (uiState.isLoading==true){
+        Column(modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            CircularProgressIndicator()
+        }
+    }
+    if (uiState.error!=null){
+        Column(modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = uiState.error.toString(),
+
+            )
+        }
+    }
+    PatientRecipeScreenContent(
+        activeRecipes = uiState.activeRecipes,
+        expiredRecipes = uiState.recipes
+    )
+
+
+}
+@Composable
+fun PatientRecipeScreenContent(
+    activeRecipes:List<RecipeWithDoctorName>,
+    expiredRecipes:List<RecipeWithDoctorName>,
+
+){
     var selectedIndex by remember { mutableStateOf(0) }
     val options=listOf("Aktivni recepti","Istekli")
 
-    val recipe1= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Brufen",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(2025,12,12),
-        id = "1"
-    )
-    val recipe2= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Tegretol",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(2025,12,12),
-        id = "1"
-    )
-    val recipe3= Recipe(
-        patientId = "1",
-        doctorId = "1",
-        medication = "Amoksicilin",
-        quantity ="2",
-        instructions = "Jedan ujutru i 1 uvece",
-        dateExpired = LocalDate.of(2025,9,12),
-        id = "1"
-    )
-    var recipes=listOf(recipe1,recipe2,recipe3)
     LazyColumn(
         modifier = Modifier.fillMaxSize()
             .background(
-            brush = Brush.radialGradient(
-                colors = listOf(Color(0xFF81D4FA), Color(0xFF0288D1)),
-                center = Offset.Unspecified,
-                radius = 1000f
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF81D4FA), Color(0xFF0288D1)),
+                    center = Offset.Unspecified,
+                    radius = 1000f
+                )
             )
-        )
             .padding(16.dp),
 
-    ) {
+        ) {
         item {
 
             Row (
@@ -128,7 +138,7 @@ fun PatientRecipesScreen(){
                         onClick = { selectedIndex = index },
                         label = { Text(text = label) },
                         icon = {},
-                       modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
                             count = options.size
@@ -152,21 +162,45 @@ fun PatientRecipesScreen(){
             }
 
         }
-        if (selectedIndex==0){
-            items(recipes.filter { it.dateExpired.isAfter(LocalDate.now()) }){
-                RecipeCartBig(
-                    it,
-                    "Petar Jovanovic"
-                )
-            }
-        }else{
-            items(recipes.filter { it.dateExpired.isBefore(LocalDate.now()) }){
-                RecipeCartBig(
-                    it,
-                    "Petar Jovanovic"
-                )
-            }
-        }
+
+           if (selectedIndex==0) {
+               if (activeRecipes.isEmpty()) {
+                   item {
+
+                       Text(
+                           "Nemate recepata"
+                       )
+                   }
+               } else {
+                   items(activeRecipes) { recipe ->
+                       RecipeCartBig(
+                           recipe = recipe.recipe,
+                           nameOfDoctor = recipe.doctorName
+
+                       )
+                   }
+               }
+
+           }
+           else{
+               if (expiredRecipes.isEmpty()) {
+                   item {
+
+                       Text(
+                           "Nemate recepata"
+                       )
+                   }
+               } else {
+                   items(expiredRecipes) { recipe ->
+                       RecipeCartBig(
+                           recipe = recipe.recipe,
+                           nameOfDoctor = recipe.doctorName
+
+                       )
+                   }
+               }
+           }
+
 
 
 
@@ -273,7 +307,7 @@ fun RecipesPreview(){
         patientId = "1",
         doctorId = "1",
         medication = "Brufen",
-        quantity ="2",
+        quantity =2,
         instructions = "Jedan ujutru i 1 uvece",
         dateExpired = LocalDate.of(2025,12,12),
         id = "1"

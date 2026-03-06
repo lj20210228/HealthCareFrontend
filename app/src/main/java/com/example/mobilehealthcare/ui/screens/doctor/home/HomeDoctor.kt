@@ -255,8 +255,10 @@ fun DoctorHomeContent(
                 }
             }
             else{
-                items(terminsWithPatients){
-                    it.first.date!= LocalDate.now()
+                items(terminsWithPatients
+                    .filter {
+                        it.first.date!= LocalDate.now()
+                    }){
 
                     CardForTermins(
                         termin=it.first,

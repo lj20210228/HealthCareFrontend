@@ -1,6 +1,7 @@
 package com.example.mobilehealthcare.service
 
 import com.example.mobilehealthcare.domain.Doctor
+import com.example.mobilehealthcare.domain.Patient
 import com.example.mobilehealthcare.domain.SelectedDoctor
 import com.example.mobilehealthcare.models.response.BaseResponse
 import com.example.mobilehealthcare.models.response.ListResponse
@@ -17,4 +18,6 @@ interface SelectedDoctorService {
     suspend fun getAllSelectedDoctorsForPatint(@Path("patientId") patientId: String): Response<ListResponse<Doctor>>
     @POST("selectedDoctors")
     suspend fun addSelectedDoctor(@Body selectedDoctor: SelectedDoctor): Response<BaseResponse<SelectedDoctor>>
+    @GET("selectedDoctors/patients/{doctorId}")
+    suspend fun getPatientsForSelectedDoctor(@Path("doctorId")doctorId: String): Response<ListResponse<Patient>>
 }

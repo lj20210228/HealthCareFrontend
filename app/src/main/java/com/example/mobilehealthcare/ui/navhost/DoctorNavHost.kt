@@ -20,7 +20,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mobilehealthcare.ui.screens.Screen
 import com.example.mobilehealthcare.ui.screens.doctor.home.DoctorHome
+import com.example.mobilehealthcare.ui.screens.doctor.patients.DoctorPatientScreen
 import com.example.mobilehealthcare.ui.screens.doctor.profile.ProfileDoctor
+import com.example.mobilehealthcare.ui.screens.shared.message.ChatScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -41,11 +43,7 @@ fun DoctorNavHost(
 
            }
             composable(Screen.DoctorScreen.Messages.route) {
-                Box(){
-                    Text(
-                        "Messages"
-                    )
-                }
+                ChatScreen()
 
             }
             composable(Screen.DoctorScreen.Profile.route) {
@@ -54,9 +52,7 @@ fun DoctorNavHost(
 
             }
             composable(Screen.DoctorScreen.Patients.route) {
-                Box(){
-                    Text("Patients")
-                }
+                DoctorPatientScreen()
 
             }
         }

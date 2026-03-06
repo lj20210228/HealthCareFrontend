@@ -2,8 +2,10 @@ package com.example.mobilehealthcare.network
 
 import com.example.mobilehealthcare.domain.WorkTime
 import com.example.mobilehealthcare.service.AuthService
+import com.example.mobilehealthcare.service.ChatService
 import com.example.mobilehealthcare.service.DoctorService
 import com.example.mobilehealthcare.service.HospitalService
+import com.example.mobilehealthcare.service.MessageService
 import com.example.mobilehealthcare.service.PatientService
 import com.example.mobilehealthcare.service.RecipeService
 import com.example.mobilehealthcare.service.SelectedDoctorService
@@ -26,7 +28,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object ApiClient {
 
-    private const val BASE_URL = "http://192.168.1.3:8080"
+    private const val BASE_URL = "http://10.150.228.21:8080"
 
     @Provides
     @Singleton
@@ -124,5 +126,13 @@ object ApiClient {
     @Singleton
     fun provideSelectedDoctorService(@Named("AuthRetrofit")retrofit: Retrofit): SelectedDoctorService=
         retrofit.create(SelectedDoctorService::class.java)
+    @Provides
+    @Singleton
+    fun provideMessageService(@Named("AuthRetrofit")retrofit: Retrofit): MessageService=
+        retrofit.create(MessageService::class.java)
+    @Provides
+    @Singleton
+    fun provideChatService(@Named("AuthRetrofit")retrofit: Retrofit): ChatService=retrofit.create(
+        ChatService::class.java)
 }
 

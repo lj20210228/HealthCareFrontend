@@ -9,11 +9,13 @@ import com.example.mobilehealthcare.domain.Recipe
 import com.example.mobilehealthcare.domain.Termin
 import com.example.mobilehealthcare.models.response.BaseResponse
 import com.example.mobilehealthcare.models.response.ListResponse
+import com.example.mobilehealthcare.service.DoctorService
 import com.example.mobilehealthcare.service.PatientService
 import com.example.mobilehealthcare.service.RecipeService
 import com.example.mobilehealthcare.service.TerminService
 import com.example.mobilehealthcare.service.TokenStorage
 import com.example.mobilehealthcare.service.UserService
+import com.example.mobilehealthcare.ui.screens.patient.recipes.RecipeWithDoctorName
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,7 +28,8 @@ class HomePatientViewModel @Inject constructor (
     val patientService: PatientService,
     val terminService: TerminService,
     val tokenStorage: TokenStorage,
-    val recipeService: RecipeService
+    val recipeService: RecipeService,
+    val doctorService: DoctorService
 
 ): ViewModel(){
     private val _uiState= MutableStateFlow(HomePatientUiState())
@@ -65,12 +68,37 @@ class HomePatientViewModel @Inject constructor (
                         val terminsResponse=termins.body()
                         val recipesResponse=recipes.body()
                         if (terminsResponse is ListResponse.SuccessResponse){
-                            _uiState.update { it.copy(termins = terminsResponse.data as List<Termin>) }
+                            val terminsWithDoctorName=mutableListOf<TerminWithDoctorName>()
+                            terminsResponse.data?.mapNotNull {termin->
+                                val doctorResponse=doctorService.getDoctorForId(termin?.doctorId!!).body()
+                                if (doctorResponse is BaseResponse.SuccessResponse){
+                                    terminsWithDoctorName.add(
+                                        TerminWithDoctorName(
+                                            termin=termin,
+                                            doctorName = doctorResponse.data?.fullName!!
+                                        )
+                                    )
+                                }
+
+                            }
+                            _uiState.update { it.copy(termins = terminsWithDoctorName) }
                         }else if(terminsResponse is ListResponse.ErrorResponse){
                             _uiState.update { it.copy(termins=emptyList()) }
                         }
                         if (recipesResponse is ListResponse.SuccessResponse){
-                            _uiState.update {it.copy(recipes=recipesResponse.data as List<Recipe>) }
+                            val recipesWithDoctorName=mutableListOf<RecipeWithDoctorName>()
+                            recipesResponse.data?.mapNotNull {
+                                val doctorResponse=doctorService.getDoctorForId(it?.doctorId!!).body()
+                                if (doctorResponse is BaseResponse.SuccessResponse){
+                                    recipesWithDoctorName.add(
+                                        RecipeWithDoctorName(
+                                            recipe=it,
+                                            doctorName = doctorResponse.data?.fullName!!
+                                        )
+                                    )
+                                }
+                            }
+                            _uiState.update {it.copy(recipes=recipesWithDoctorName) }
 
                         }else if(recipesResponse is ListResponse.ErrorResponse){
                             _uiState.update { it.copy(recipes=emptyList()) }
@@ -105,7 +133,11 @@ class HomePatientViewModel @Inject constructor (
 data class HomePatientUiState(
     val isLoading: Boolean=true,
     val patient: Patient?=null,
-    val termins: List<Termin> =emptyList(),
-    val recipes:List<Recipe> =emptyList(),
+    val termins: List<TerminWithDoctorName> =emptyList(),
+    val recipes:List<RecipeWithDoctorName> =emptyList(),
     val error:String?=null
+)
+data class TerminWithDoctorName(
+    val termin: Termin,
+    val doctorName: String
 )

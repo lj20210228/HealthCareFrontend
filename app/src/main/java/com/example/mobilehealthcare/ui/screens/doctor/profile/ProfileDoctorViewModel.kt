@@ -101,11 +101,54 @@ class ProfileDoctorViewModel @Inject constructor(val hospitalService: HospitalSe
             }
         }
     }
-    fun addDoctor(){
-        viewModelScope.launch {
+    // U ProfileDoctorViewModel.kt
 
+    fun addDoctorWorkTime(workTime: WorkTime) {
+        viewModelScope.launch {
+            val response = workTimeService.addWorkTime(workTime)
+            val body = response.body()
+
+            when (body) {
+                is BaseResponse.SuccessResponse -> {
+                    getWorkTimeForDoctor()
+                }
+                is BaseResponse.ErrorResponse -> {
+                    _uiState.value = Error(message = body.exception)
+                }
+                null -> _uiState.value = Error(message = "Greška pri dodavanju")
+            }
         }
     }
+
+    fun updateDoctorWorkTime(workTime: WorkTime) {
+        viewModelScope.launch {
+            val response = workTimeService.updateWorkTime(workTime)
+            val body = response.body()
+
+            when (body) {
+                is BaseResponse.SuccessResponse -> {
+                    getWorkTimeForDoctor()
+                }
+                is BaseResponse.ErrorResponse -> {
+                    _uiState.value = Error(message = body.exception)
+                }
+                null -> _uiState.value = Error(message = "Greška pri ažuriranju")
+            }
+        }
+    }
+    fun deleteDoctorWorkTime(workTimeId: String) {
+        viewModelScope.launch {
+            val response = workTimeService.deleteWorkTime(workTimeId)
+            val body = response.body()
+
+            if (body is BaseResponse.SuccessResponse) {
+                getWorkTimeForDoctor()
+            } else if (body is BaseResponse.ErrorResponse) {
+                _uiState.value = ProfileDoctorUiState.Error(message = body.exception)
+            }
+        }
+    }
+
      fun getHospitalById(){
          viewModelScope.launch {
              Log.d("HospitalId",hospitalId.toString())

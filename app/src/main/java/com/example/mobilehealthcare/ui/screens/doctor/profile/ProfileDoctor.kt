@@ -1,6 +1,8 @@
 package com.example.mobilehealthcare.ui.screens.doctor.profile
 
 import android.app.Activity
+import android.app.TimePickerDialog
+import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.util.Log
@@ -8,6 +10,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +31,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,8 +67,15 @@ import com.example.mobilehealthcare.domain.Role
 import com.example.mobilehealthcare.domain.User
 import com.example.mobilehealthcare.domain.WorkTime
 import java.time.LocalTime
+import java.util.UUID
 
+data class WorkTimeFormState(
+    val day: DayInWeek = DayInWeek.MONDAY,
+    val startTime: String = "08:00",
+    val endTime: String = "16:00"
+)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
@@ -67,6 +84,16 @@ fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
     var user by remember { mutableStateOf<User?>(null) }
     var hospital by remember { mutableStateOf<Hospital?>(null) }
     var workTime by remember { mutableStateOf<List<WorkTime>>(emptyList()) }
+
+
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var selectedWorkTime by remember { mutableStateOf<WorkTime?>(null) }
+
+    val openSheet: (WorkTime?) -> Unit = { wt ->
+        selectedWorkTime = wt
+        showBottomSheet = true
+    }
 
     val context = LocalContext.current
     val uiState = viewModel.uiState.collectAsState().value
@@ -161,11 +188,18 @@ fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
             StatisticCart(patients = d.currentPatients ?: 0, termins = 32)
         }
 
-        Spacer(Modifier.size(32.dp))
 
+        Spacer(Modifier.size(32.dp))
         doctor?.let { d ->
-            WorkTimeCart(doctor = d, workTimeList = workTime)
+            WorkTimeCart(
+                workTimeList = workTime,
+                onEditClick = { openSheet(it) },
+                onDeleteClick = { viewModel.deleteDoctorWorkTime(it.id) }, // Poziv brisanja
+                onAddClick = { openSheet(null) }
+            )
         }
+
+        Spacer(Modifier.size(32.dp))
 
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
@@ -176,6 +210,47 @@ fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
         ) {
             Text("Izloguj se")
+        }
+    }
+
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            WorkTimeSheetContent(
+                initialWorkTime = selectedWorkTime,
+                onSave = { day, startStr, endStr ->
+                    try {
+                        val sTime = LocalTime.parse(startStr)
+                        val eTime = LocalTime.parse(endStr)
+
+                        val wt = WorkTime(
+                            id = selectedWorkTime?.id ?: UUID.randomUUID().toString(),
+                            doctorId = viewModel.doctorId ?: "",
+                            dayIn = day,
+                            startTime = sTime,
+                            endTime = eTime
+                        )
+
+                        if (selectedWorkTime == null) {
+                            viewModel.addDoctorWorkTime(wt)
+                        } else {
+                            viewModel.updateDoctorWorkTime(wt)
+                        }
+                        showBottomSheet = false
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context,
+                            "Neispravan format vremena (HH:mm)",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                onCancel = { showBottomSheet = false },
+                existingDays = workTime.map { it.dayIn }
+            )
         }
     }
 }
@@ -241,68 +316,154 @@ fun StatisticCart(
     }
 
 }
+@Composable
+fun WorkTimeSheetContent(
+    initialWorkTime: WorkTime?,
+    onSave: (DayInWeek, String, String) -> Unit,
+    onCancel: () -> Unit,
+    existingDays: List<DayInWeek>
+) {
+
+
+    val availableDays = DayInWeek.values().filter {
+        it !in existingDays || it == initialWorkTime?.dayIn
+    }
+
+    var day by remember { mutableStateOf(initialWorkTime?.dayIn ?: availableDays.firstOrNull() ?: DayInWeek.MONDAY) }
+    var startTime by remember { mutableStateOf(initialWorkTime?.startTime ?: LocalTime.of(8, 0)) }
+    var endTime by remember { mutableStateOf(initialWorkTime?.endTime ?: LocalTime.of(16, 0)) }
+
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(text = if (initialWorkTime == null) "Dodaj radno vreme" else "Izmeni radno vreme", style = MaterialTheme.typography.headlineSmall)
+
+        Text("Dan u nedelji:", style = MaterialTheme.typography.labelLarge)
+        Row(Modifier.horizontalScroll(rememberScrollState())) {
+            availableDays.forEach { d ->
+                FilterChip(
+                    selected = day == d,
+                    onClick = { day = d },
+                    label = { Text(d.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+            }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OutlinedButton(
+                onClick = {
+                    showTimePickerDialog(context, startTime) { startTime = it }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Početak", style = MaterialTheme.typography.labelSmall)
+                    Text(startTime.toString())
+                }
+            }
+
+            OutlinedButton(
+                onClick = {
+                    showTimePickerDialog(context, endTime) { endTime = it }
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("Kraj", style = MaterialTheme.typography.labelSmall)
+                    Text(endTime.toString())
+                }
+            }
+        }
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = onCancel, modifier = Modifier.weight(1f)) {
+                Text("Otkaži")
+            }
+            Button(
+                onClick = { onSave(day, startTime.toString(), endTime.toString()) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Sačuvaj")
+            }
+        }
+    }
+}
+
+fun showTimePickerDialog(context: Context, currentTime: LocalTime, onTimeSelected: (LocalTime) -> Unit) {
+    TimePickerDialog(
+        context,
+        { _, hour, minute -> onTimeSelected(LocalTime.of(hour, minute)) },
+        currentTime.hour,
+        currentTime.minute,
+        true
+    ).show()
+}
 
 @Composable
 fun WorkTimeCart(
-    doctor: Doctor,
-    workTimeList:List< WorkTime>
-){
+    workTimeList: List<WorkTime>,
+    onEditClick: (WorkTime) -> Unit,
+    onDeleteClick: (WorkTime) -> Unit, // Novo
+    onAddClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(2.dp, MaterialTheme.colorScheme.secondary)
-    ){
-        Text(
-            text = "Radno vreme",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
-        )
-        workTimeList.forEach {
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-             Text(
-                 text = when(it.dayIn){
-                     DayInWeek.MONDAY -> "Ponedeljak"
-                     DayInWeek.TUESDAY -> "Utorak"
-                     DayInWeek.WEDNESDAY -> "Sreda"
-                     DayInWeek.THURSDAY -> "Četvrtak"
-                     DayInWeek.FRIDAY -> "Petak"
-                     DayInWeek.SATURDAY -> "Subota"
-                     DayInWeek.SUNDAY -> "Nedelja"
-                 },
-                 style = MaterialTheme.typography.bodyMedium
-             )
-             Text(
-                 text =if (it.startTime==null||it.endTime==null)"Neradan dan" else  it.startTime.toString()+"-"+it.endTime.toString(),
-                 style = MaterialTheme.typography.labelMedium
-             )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Radno vreme", style = MaterialTheme.typography.titleSmall)
+            // Dugme za dodavanje je omogućeno samo ako lekar nema popunjenih svih 7 dana
+            if (workTimeList.size < 7) {
+                IconButton(onClick = onAddClick) {
+                    Icon(painter = painterResource(R.drawable.outline_add_24), contentDescription = "Dodaj")
+                }
             }
         }
-        OutlinedButton(
-            onClick = { },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            shape = RoundedCornerShape(8.dp),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.inversePrimary),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.onPrimaryFixedVariant
+
+        if (workTimeList.isEmpty()) {
+            Text(
+                text = "Nema definisanog radnog vremena",
+                modifier = Modifier.padding(16.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = androidx.compose.ui.graphics.Color.Gray
             )
-        ) {
-            Text("Izmeni", style = MaterialTheme.typography.labelSmall)
+        } else {
+            workTimeList.forEach { wt ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val dayName = when(wt.dayIn) {
+                        DayInWeek.MONDAY -> "Ponedeljak"
+                        DayInWeek.TUESDAY -> "Utorak"
+                        DayInWeek.WEDNESDAY -> "Sreda"
+                        DayInWeek.THURSDAY -> "Četvrtak"
+                        DayInWeek.FRIDAY -> "Petak"
+                        DayInWeek.SATURDAY -> "Subota"
+                        DayInWeek.SUNDAY -> "Nedelja"
+                    }
+
+                    Text(text = dayName, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "${wt.startTime} - ${wt.endTime}", style = MaterialTheme.typography.bodySmall)
+
+                    IconButton(onClick = { onEditClick(wt) }) {
+                        Icon(painter = painterResource(R.drawable.outline_edit_24), contentDescription = "Izmeni", modifier = Modifier.size(16.dp))
+                    }
+                    IconButton(onClick = { onDeleteClick(wt) }) {
+                        Icon(painter = painterResource(R.drawable.outline_cleaning_services_24), contentDescription = "Obriši", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            }
         }
-        Spacer(modifier = Modifier.size(8.dp))
-
-
     }
 }
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

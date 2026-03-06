@@ -22,6 +22,7 @@ import com.example.mobilehealthcare.ui.screens.Screen
 import com.example.mobilehealthcare.ui.screens.patient.doctors.DoctorScreenForPatients
 import com.example.mobilehealthcare.ui.screens.patient.home.HomePatientScreen
 import com.example.mobilehealthcare.ui.screens.patient.recipes.PatientRecipesScreen
+import com.example.mobilehealthcare.ui.screens.shared.message.ChatScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -38,15 +39,11 @@ fun PatientNavHost(
             ,modifier= Modifier.padding(innerPadding)
         ){
             composable(Screen.PatientScreen.Home.route) {
-                HomePatientScreen()
+                HomePatientScreen(navController=navController)
 
             }
             composable(Screen.PatientScreen.Messages.route) {
-                Box(){
-                    Text(
-                        "Messages"
-                    )
-                }
+                ChatScreen()
 
             }
             composable(Screen.PatientScreen.Therapy.route) {

@@ -2,8 +2,8 @@ package com.example.mobilehealthcare.ui.screens
 
 import android.graphics.drawable.Icon
 import com.example.mobilehealthcare.R
+import kotlinx.serialization.Serializable
 import java.util.function.IntConsumer
-
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")

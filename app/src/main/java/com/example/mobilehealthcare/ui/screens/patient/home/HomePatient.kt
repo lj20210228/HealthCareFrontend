@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,11 +61,15 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.mobilehealthcare.R
 import com.example.mobilehealthcare.domain.Patient
 import com.example.mobilehealthcare.domain.Recipe
 import com.example.mobilehealthcare.domain.Termin
 import com.example.mobilehealthcare.domain.TerminStatus
+import com.example.mobilehealthcare.ui.screens.Screen
+import com.example.mobilehealthcare.ui.screens.patient.recipes.RecipeWithDoctorName
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -72,7 +77,8 @@ import java.time.LocalTime
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomePatientScreen(
-    viewModel: HomePatientViewModel= hiltViewModel()
+    viewModel: HomePatientViewModel= hiltViewModel(),
+    navController: NavController
 ) {
   val uiState by viewModel.uiState.collectAsState()
     val lifecycleOwner= LocalLifecycleOwner.current
@@ -107,7 +113,8 @@ fun HomePatientScreen(
             HomePatientContent(
                 patient = uiState.patient!!,
                 termins = uiState.termins,
-                recipes = uiState.recipes
+                recipes = uiState.recipes,
+                navController = navController
             )
         }
     }
@@ -115,8 +122,9 @@ fun HomePatientScreen(
 @Composable
 fun HomePatientContent(
     patient: Patient,
-    recipes: List<Recipe>,
-    termins: List<Termin>
+    recipes: List<RecipeWithDoctorName>,
+    termins: List<TerminWithDoctorName>,
+    navController: NavController
 ){
     var showAll by remember { mutableStateOf(false) }
     var showAllRecipes by remember { mutableStateOf(false) }
@@ -173,7 +181,9 @@ fun HomePatientContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 OutlinedButton(
-                    onClick = {},
+                    onClick = {
+                        navController.navigate("doctorsAndTermins")
+                              },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.onBackground
@@ -187,7 +197,9 @@ fun HomePatientContent(
                 }
 
                 OutlinedButton(
-                    onClick = {},
+                    onClick = {
+                        navController.navigate("doctorsAndTermins")
+                    },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer
@@ -204,6 +216,7 @@ fun HomePatientContent(
                             "Vidi sve termine",
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.padding(top = 8.dp)
+
                         )
                     }
                 }
@@ -235,8 +248,8 @@ fun HomePatientContent(
         if (displayedTermins.isNotEmpty()){
             items(displayedTermins) { termin ->
                 CardForTerminsPatients(
-                    termin = termin,
-                    name = "Petar Petrovic"
+                    termin = termin.termin,
+                    name = termin.doctorName
                 )
             }
         }else{
@@ -275,8 +288,8 @@ fun HomePatientContent(
         if (displayedRecipes.isNotEmpty()){
             items(displayedRecipes) { recipe ->
                 RecipeCart(
-                    recipe = recipe,
-                    doctorName = "Ana Ivanovic",
+                    recipe = recipe.recipe,
+                    doctorName = recipe.doctorName,
                 )
             }
         }else{
@@ -694,16 +707,4 @@ fun PartialBottomSheet(
 }
 
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-@Preview
-fun HomePatientPreview(){
 
-
-    HomePatientContent(patient= Patient(
-        fullName = "Petar Petrovic",
-        userId = "2",
-        hospitalId = "2",
-        jmbg = "100310220318",
-    ),emptyList(),emptyList())
-}

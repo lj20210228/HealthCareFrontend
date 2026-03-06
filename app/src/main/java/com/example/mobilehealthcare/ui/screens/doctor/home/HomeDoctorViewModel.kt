@@ -105,31 +105,37 @@ class HomeDoctorViewModel @Inject constructor(
     }
     fun updateTerminRequest(termin: Termin) {
         viewModelScope.launch {
+
             Log.d("Update",termin.toString())
 
             val terminResponse=terminService.updateTermin(termin)
-            val termin=terminResponse.body()
+            val terminUpdated=terminResponse.body()
             Log.d("Update",terminResponse.toString())
+            Log.d("UpdatedTermin",terminUpdated.toString())
 
-            if (termin is BaseResponse.SuccessResponse){
+
+            if (terminUpdated is BaseResponse.SuccessResponse){
                 getTerminsWithPatients()
+
             }
-            if (termin is BaseResponse.ErrorResponse){
-                _uiState.update { it.copy(error=termin.message) }
+            if (terminUpdated is BaseResponse.ErrorResponse){
+                _uiState.update { it.copy(error=terminUpdated.message, isLoading = false) }
             }
 
         }
     }
     fun deleteTermin(terminId:String){
         viewModelScope.launch {
+
             val terminResponse=terminService.deleteTermin(terminId)
             val termin=terminResponse.body()
             Log.d("Delete",terminResponse.toString())
             if (termin is BaseResponse.SuccessResponse){
+
                 getTerminsWithPatients()
             }
             if (termin is BaseResponse.ErrorResponse){
-                _uiState.update { it.copy(error=termin.message) }
+                _uiState.update { it.copy(error=termin.message, isLoading = false) }
             }        }
     }
 }

@@ -39,6 +39,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -49,6 +50,7 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonColors
 import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
@@ -147,6 +149,10 @@ fun DoctorScreenForPatientsContent(
 ) {
     var selectedIndex by remember { mutableStateOf(0) }
     val options=listOf("Moji","Svi")
+    var searchQuery by remember { mutableStateOf("") }
+
+
+
 
     Column(
         modifier = Modifier
@@ -187,14 +193,15 @@ fun DoctorScreenForPatientsContent(
 
 
 
-       /* DoctorSearchBar(
-            searchQuery = searchQuery,
-            onQueryChange = { searchQuery = it
-                if(it.isNotEmpty())active=true},
-            active = active,
-            onActiveChange = { active = it },
-            filteredItems = filteredItems
-        )*/
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Pretraži po imenu...") },
+            leadingIcon = { Icon(painter = painterResource(R.drawable.outline_search_24), contentDescription = null) },
+            shape = RoundedCornerShape(32.dp)
+        )
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -229,83 +236,51 @@ fun DoctorScreenForPatientsContent(
             }
         }
 
-        Spacer(Modifier.size(32.dp))
 
-        LazyColumn {
-            if (selectedIndex==0){
-                if (myDoctors.isEmpty()){
-                    item {
-                        Text(
-                            text ="Nemate izabranih lekara",
-                            style = MaterialTheme.typography.headlineMedium
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val currentList = if (selectedIndex == 0) myDoctors else allDoctors
+            val filteredDoctors = currentList.filter { it.first.fullName.contains(searchQuery, ignoreCase = true) }
+
+
+            if (currentList.isEmpty()) {
+                item {
+                    Text(
+                        text = if (searchQuery.isEmpty()) "Lista je prazna" else "Nema rezultata za '$searchQuery'",
+                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
+            } else {
+                items(filteredDoctors) { item ->
+                    DoctorCardForPatient(
+                        doctor = item.first,
+                        hospital = hospital,
+                        myDoctor = selectedIndex == 0,
+                        workTime = item.second,
+                        onTerminClick = { viewModel.addTermin(it) },
+                        onChooseDoctor = { doctor ->
+                            viewModel.addSelectedDoctor(
+                                SelectedDoctor(doctor.id!!, viewModel.patientId!!)
                             )
-                    }
-
-
-                }else{
-                    items(myDoctors){
-                        DoctorCardForPatient(
-                            it.first,
-                            hospital,
-                            myDoctor = true,
-                            workTime = it.second,
-                            onTerminClick = {  termin->
-                                viewModel.addTermin(termin)
-                            },
-                            onChooseDoctor = {},
-                            patientId = viewModel.patientId!!
-                        )
-                    }
+                        },
+                        patientId = viewModel.patientId ?: ""
+                    )
                 }
-
-            }else{
-                if (allDoctors.isEmpty()){
-                    item {
-                        Text(
-                            text ="Nema lekara u ovoj bolnici",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-                    }
-
-
-                }else{
-                    items(allDoctors){
-                        DoctorCardForPatient(
-                            it.first,
-                            hospital,
-                            workTime = it.second,
-                            myDoctor = false,
-                            onTerminClick = {},
-                            onChooseDoctor =  {doctor->
-                                viewModel.addSelectedDoctor(
-                                    SelectedDoctor(
-                                        doctorId = doctor.id!!,
-                                        patientId = viewModel.patientId
-                                    )
-                                )
-                            },
-                           patientId =  viewModel.patientId!!
-                        )
-                    }
-                }
-
             }
+
             item {
                 OutlinedButton(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    onClick = {
-                        viewModel.logout()
-
-                    },
-                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    onClick = { viewModel.logout() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Izloguj se")
+                    Text("Izloguj se", color = Color.White)
                 }
             }
-
         }
 
 
@@ -542,7 +517,22 @@ fun PartialBottomSheetForTermins(
             }
 
             if (showDatePicker) {
-                val datePickerState = rememberDatePickerState()
+                val datePickerState = rememberDatePickerState(
+                    selectableDates = object : SelectableDates {
+                        override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                            val isNotPast = utcTimeMillis >= System.currentTimeMillis() - 86400000 // Juče
+
+                            val isWorkingDay = isDoctorWorkingOn(utcTimeMillis, workTime)
+
+                            return isNotPast && isWorkingDay
+                        }
+
+                        override fun isSelectableYear(year: Int): Boolean {
+                            return year >= java.time.LocalDate.now().year
+                        }
+                    }
+                )
+
                 DatePickerDialog(
                     onDismissRequest = { showDatePicker = false },
                     confirmButton = {
@@ -566,7 +556,6 @@ fun PartialBottomSheetForTermins(
                     DatePicker(state = datePickerState)
                 }
             }
-
             Spacer(Modifier.height(24.dp))
 
             selectedDate?.let { date ->
@@ -737,7 +726,30 @@ fun PartialBottomSheetForTermins(
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DoctorSearchBar(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    active: Boolean,
+    onActiveChange: (Boolean) -> Unit,
+) {
 
+    SearchBar(
+        query = searchQuery,
+        onQueryChange = onQueryChange,
+        onSearch = { onActiveChange(false) },
+        active = false,
+        onActiveChange = onActiveChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
+        placeholder = { Text("Pretraži lekare...") },
+        leadingIcon = { Icon(painter = painterResource(R.drawable.stethoscope), contentDescription = null, modifier = Modifier.size(20.dp)) },
+
+    ) {}
+}
+/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DoctorSearchBar(
@@ -747,46 +759,54 @@ fun DoctorSearchBar(
     onActiveChange: (Boolean) -> Unit,
     filteredItems: List<Doctor>
 ) {
-    Column {
+
         SearchBar(
             query = searchQuery,
-            onQueryChange = {
-                onQueryChange(it)
-            },
+            onQueryChange = onQueryChange,
             onSearch = { onActiveChange(false)},
             active = active,
             onActiveChange = onActiveChange,
             modifier = Modifier
                 .fillMaxWidth(),
             placeholder = { Text("Pretraži lekare") },
+
         ) {
-            if (searchQuery.isNotEmpty()) {
-                filteredItems.forEach { item ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(32.dp)
-                            .clickable {
-                                onQueryChange(item.fullName)
-                                onActiveChange(false)
-                            }
-                            .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = item.fullName,
-                            fontSize = 15.sp,
-                            maxLines = 1
-                        )
-                    }
+
+            LazyColumn (modifier = Modifier.fillMaxWidth()){
+                items(filteredItems){doctor->
+                    ListItem(
+                        headlineContent = {Text(doctor.fullName)},
+                        supportingContent = {Text(doctor.specialization)},
+                        leadingContent = {Icon(painter = painterResource(R.drawable.stethoscope), contentDescription = null)}
+                        , modifier = Modifier.clickable{
+                            onQueryChange(doctor.fullName)
+                            onActiveChange(false)
+                        }
+                    )
                 }
             }
         }
+
+
+}*/
+
+fun isDoctorWorkingOn(dateMillis: Long, workTime: List<WorkTime?>): Boolean {
+    val date = java.time.Instant.ofEpochMilli(dateMillis)
+        .atZone(java.time.ZoneId.systemDefault())
+        .toLocalDate()
+
+    val dayOfWeek = when (date.dayOfWeek) {
+        java.time.DayOfWeek.MONDAY -> DayInWeek.MONDAY
+        java.time.DayOfWeek.TUESDAY -> DayInWeek.TUESDAY
+        java.time.DayOfWeek.WEDNESDAY -> DayInWeek.WEDNESDAY
+        java.time.DayOfWeek.THURSDAY -> DayInWeek.THURSDAY
+        java.time.DayOfWeek.FRIDAY -> DayInWeek.FRIDAY
+        java.time.DayOfWeek.SATURDAY -> DayInWeek.SATURDAY
+        java.time.DayOfWeek.SUNDAY -> DayInWeek.SUNDAY
     }
 
+    return workTime.any { it?.dayIn == dayOfWeek }
 }
-
-
 
 @Composable
 @Preview
