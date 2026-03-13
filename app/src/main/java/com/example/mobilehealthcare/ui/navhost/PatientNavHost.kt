@@ -2,7 +2,6 @@ package com.example.mobilehealthcare.ui.navhost
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
@@ -15,14 +14,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.example.mobilehealthcare.ui.screens.Screen
 import com.example.mobilehealthcare.ui.screens.patient.doctors.DoctorScreenForPatients
 import com.example.mobilehealthcare.ui.screens.patient.home.HomePatientScreen
 import com.example.mobilehealthcare.ui.screens.patient.recipes.PatientRecipesScreen
-import com.example.mobilehealthcare.ui.screens.shared.message.ChatScreen
+import com.example.mobilehealthcare.ui.screens.shared.chat.ChatScreen
+import com.example.mobilehealthcare.ui.screens.shared.message.MessageScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -42,8 +44,8 @@ fun PatientNavHost(
                 HomePatientScreen(navController=navController)
 
             }
-            composable(Screen.PatientScreen.Messages.route) {
-                ChatScreen()
+            composable(Screen.PatientScreen.Chats.route) {
+                ChatScreen(navController = navController)
 
             }
             composable(Screen.PatientScreen.Therapy.route) {
@@ -56,6 +58,21 @@ fun PatientNavHost(
                 DoctorScreenForPatients()
 
             }
+            composable(
+                route = Screen.PatientScreen.Message.route,
+                arguments = listOf(
+                    navArgument("chatId") { type = NavType.StringType },
+                    navArgument("receiverId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+
+                    val chatId = backStackEntry.arguments?.getString("chatId")
+                    val receiverId = backStackEntry.arguments?.getString("receiverId")
+                    MessageScreen(chatId = chatId, receiverName = receiverId)
+
+
+            }
+
         }
 
     }
@@ -65,7 +82,7 @@ fun PatientBottomBar(navController: NavHostController){
     val items=listOf(
         Screen.PatientScreen.Home,
 
-        Screen.PatientScreen.Messages,
+        Screen.PatientScreen.Chats,
         Screen.PatientScreen.Therapy,
         Screen.PatientScreen.DoctorsAndTermins
 

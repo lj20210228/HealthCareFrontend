@@ -11,6 +11,8 @@ interface DoctorService {
 
     @GET("/doctor/{id}")
     suspend fun getDoctorForId(@Path("id") id: String): Response<BaseResponse<Doctor>>
+    @GET("/doctor/userId/{userId}")
+    suspend fun getDoctorForUserId(@Path("userId") userId: String): Response<BaseResponse<Doctor>>
     @GET("/doctor/hospital/{hospitalId}")
     suspend fun getAllDoctorsInHospital(@Path("hospitalId")hospitalId: String): Response<ListResponse<Doctor>>
 }
