@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -61,6 +64,8 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -267,7 +272,8 @@ fun DoctorScreenForPatientsContent(
                                 SelectedDoctor(doctor.id!!, viewModel.patientId!!)
                             )
                         },
-                        patientId = viewModel.patientId ?: ""
+                        patientId = viewModel.patientId ?: "",
+                        viewModel = viewModel
                     )
                 }
             }
@@ -297,12 +303,15 @@ fun DoctorCardForPatient(
     onTerminClick:(Termin)->Unit,
     onChooseDoctor:(Doctor)-> Unit,
     workTime: List<WorkTime?> =emptyList(),
-    patientId: String
+    patientId: String,
+    viewModel: DoctorScreenForPatientViewModel
 ){
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false,
     )
+    val uiState by viewModel.uiState.collectAsState()
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -466,7 +475,10 @@ fun DoctorCardForPatient(
             workTime=workTime,
             patientId=patientId,
             doctorId = doctor.id!!,
-            hospitalId = hospital.id
+            hospitalId = hospital.id,
+            slots = uiState.availableSlots,
+            viewModel = viewModel
+
         )
     }
 }
@@ -480,14 +492,18 @@ fun PartialBottomSheetForTermins(
     doctorId: String,
     hospitalId: String,
     onAddTermin: (Termin) -> Unit,
-    workTime: List<WorkTime?>
+    workTime: List<WorkTime?>,
+    slots: List<LocalTime>,
+    viewModel: DoctorScreenForPatientViewModel
 ) {
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var showStartTimePicker by remember { mutableStateOf(false) }
-    var showEndTimePicker by remember { mutableStateOf(false) }
-    var startTime by remember { mutableStateOf<LocalTime?>(null) }
-    var endTime by remember{mutableStateOf<LocalTime?>(null)}
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.clearSlots()
+        }
+    }
+
 
     ModalBottomSheet(
         modifier = Modifier.fillMaxHeight(),
@@ -559,6 +575,10 @@ fun PartialBottomSheetForTermins(
             Spacer(Modifier.height(24.dp))
 
             selectedDate?.let { date ->
+                LaunchedEffect(date) {
+                    viewModel.getAvailableSlots(doctorId, date)
+                }
+
                 val dayOfWeek = when (date.dayOfWeek) {
                     DayOfWeek.MONDAY -> DayInWeek.MONDAY
                     DayOfWeek.TUESDAY -> DayInWeek.TUESDAY
@@ -579,148 +599,56 @@ fun PartialBottomSheetForTermins(
                     )
 
                     Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = { showStartTimePicker = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(text = startTime?.toString() ?: "Izaberite vreme početka")
-                    }
+                    Text("Dostupni termini:")
 
-                    if (showStartTimePicker) {
-                        val timePickerState = rememberTimePickerState()
-                        TimePickerDialog(
-                            onDismissRequest = { showStartTimePicker = false },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        startTime = LocalTime.of(
-                                            timePickerState.hour,
-                                            timePickerState.minute
-                                        )
-                                        showStartTimePicker = false
-                                    },
+                    Spacer(Modifier.height(8.dp))
 
-                                    ) {
-                                    Text(
-                                        "OK"
-                                    )
-                                }
-                            },
-
-                            dismissButton = {
-                                TextButton(
-                                    onClick = {
-
-                                        showStartTimePicker = false
-                                    },
-
-                                    ) {
-                                    Text(
-                                        "Otkaži"
-                                    )
-                                }
-                            },
-                            title = {
-                                Text(
-                                    "Početak termina"
-                                )
-                            }
-                        ) {
-                            TimePicker(state = timePickerState)
-                        }
-
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (startTime != null) {
-                        Button(
-                            onClick = {
-                                showEndTimePicker = true
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = endTime?.toString() ?: "Izaberite vreme kraja"
-                            )
-                        }
-                    }
-                    if (showEndTimePicker) {
-                        val timePickerState = rememberTimePickerState()
-                        TimePickerDialog(
-                            onDismissRequest = { showEndTimePicker = false },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        endTime = LocalTime.of(
-                                            timePickerState.hour,
-                                            timePickerState.minute
-                                        )
-                                        showEndTimePicker = false
-                                    },
-
-                                    ) {
-                                    Text(
-                                        "OK"
-                                    )
-                                }
-                            },
-
-                            dismissButton = {
-                                TextButton(
-                                    onClick = {
-
-                                        showEndTimePicker = false
-                                    },
-
-                                    ) {
-                                    Text(
-                                        "Otkaži"
-                                    )
-                                }
-                            },
-                            title = {
-                                Text(
-                                    "Kraj termina"
-                                )
-                            }
-                        ) {
-                            TimePicker(state = timePickerState)
-                        }
-
-                    }
-
-                    val workStart = currentWorkTime.startTime
-                    val workEnd = currentWorkTime.endTime
-                    Log.d("StartTime",workStart.toString())
-
-                    if (startTime != null && endTime != null &&
-                        startTime!! >= workStart && endTime!! <= workEnd && startTime!! < endTime!!
-                    ) {
-
-                        Button(
-                            onClick = {
-                                val newTermin = Termin(
-                                    id = UUID.randomUUID().toString(),
-                                    patientId = patientId,
-                                    doctorId = doctorId,
-                                    hospitalId = hospitalId,
-                                    startTime = startTime!!,
-                                    endTime = endTime,
-                                    date = date
-                                )
-                                onAddTermin(newTermin)
-                                onDissmisRequest()
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Zakaži termin")
-                        }
-                    } else if (startTime != null && endTime != null) {
+                    if (slots.isEmpty()){
                         Text(
-                            text = "Vreme mora biti u okviru radnog vremena (${workStart} - ${workEnd})",
+                            text = "Nema dostupnih termina",
                             color = Color.Red,
                             style = MaterialTheme.typography.bodyMedium
                         )
+                    }else{
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(3),
+                            modifier = Modifier.height(200.dp)
+                        ) {
+                            items(slots) { slot ->
+
+                                Button(
+                                    onClick = {
+                                        val newTermin = Termin(
+                                            id = UUID.randomUUID().toString(),
+                                            patientId = patientId,
+                                            doctorId = doctorId,
+                                            hospitalId = hospitalId,
+                                            startTime = slot,
+                                            endTime = slot.plusHours(1),
+                                            date = date
+                                        )
+
+                                        onAddTermin(newTermin)
+                                        onDissmisRequest()
+                                    },
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .fillMaxWidth()
+                                ) {
+                                    Text(slot.toString())
+                                }
+                            }
+                        }
+
                     }
+
+
+
+                }else{
+                    Text(
+                        text = "Lekar ne radi ovaj dan",
+                        color = Color.Red
+                    )
                 }
             }
         }
@@ -749,46 +677,6 @@ fun DoctorSearchBar(
 
     ) {}
 }
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DoctorSearchBar(
-    searchQuery: String,
-    onQueryChange: (String) -> Unit,
-    active: Boolean,
-    onActiveChange: (Boolean) -> Unit,
-    filteredItems: List<Doctor>
-) {
-
-        SearchBar(
-            query = searchQuery,
-            onQueryChange = onQueryChange,
-            onSearch = { onActiveChange(false)},
-            active = active,
-            onActiveChange = onActiveChange,
-            modifier = Modifier
-                .fillMaxWidth(),
-            placeholder = { Text("Pretraži lekare") },
-
-        ) {
-
-            LazyColumn (modifier = Modifier.fillMaxWidth()){
-                items(filteredItems){doctor->
-                    ListItem(
-                        headlineContent = {Text(doctor.fullName)},
-                        supportingContent = {Text(doctor.specialization)},
-                        leadingContent = {Icon(painter = painterResource(R.drawable.stethoscope), contentDescription = null)}
-                        , modifier = Modifier.clickable{
-                            onQueryChange(doctor.fullName)
-                            onActiveChange(false)
-                        }
-                    )
-                }
-            }
-        }
-
-
-}*/
 
 fun isDoctorWorkingOn(dateMillis: Long, workTime: List<WorkTime?>): Boolean {
     val date = java.time.Instant.ofEpochMilli(dateMillis)
@@ -806,9 +694,4 @@ fun isDoctorWorkingOn(dateMillis: Long, workTime: List<WorkTime?>): Boolean {
     }
 
     return workTime.any { it?.dayIn == dayOfWeek }
-}
-
-@Composable
-@Preview
-fun Preview(){
 }

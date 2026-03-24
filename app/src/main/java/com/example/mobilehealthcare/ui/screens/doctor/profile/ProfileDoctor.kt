@@ -3,7 +3,6 @@ package com.example.mobilehealthcare.ui.screens.doctor.profile
 import android.app.Activity
 import android.app.TimePickerDialog
 import android.content.Context
-import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -51,6 +50,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -120,6 +122,14 @@ fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(brush = Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFF81D4FA), // svetlo plava
+                    Color(0xFF0288D1),
+                ),
+                center = Offset.Unspecified,
+                radius = 1000f
+            ))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
@@ -152,15 +162,7 @@ fun ProfileDoctor( viewModel: ProfileDoctorViewModel = hiltViewModel()) {
                     Text(text = d.specialization ?: "-", style = MaterialTheme.typography.labelMedium)
                 }
 
-                Button(
-                    onClick = {},
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(2.dp, MaterialTheme.colorScheme.tertiaryContainer),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                    modifier = Modifier.height(32.dp)
-                ) {
-                    Text(text = "Izmeni", style = MaterialTheme.typography.bodySmall)
-                }
+
             }
 
             Divider(

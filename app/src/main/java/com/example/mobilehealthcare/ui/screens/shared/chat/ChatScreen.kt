@@ -32,6 +32,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -67,6 +69,14 @@ fun ChatScreen(
         }
     ) { padding ->
         Box(modifier = Modifier
+            .background(brush = Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFF81D4FA), // svetlo plava
+                    Color(0xFF0288D1),
+                ),
+                center = Offset.Unspecified,
+                radius = 1000f
+            ))
             .fillMaxSize()
             .padding(padding)) {
             when {
@@ -78,7 +88,7 @@ fun ChatScreen(
                 )
                 else -> {
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.padding( 16.dp)) {
+                        modifier = Modifier .padding( 16.dp)) {
                         item {
                             Text(
                                 text = "Vaše poruke",
@@ -146,13 +156,10 @@ fun ChatScreen(
 
                                             val isDoctor = viewModel.doctorId != null
 
-                                            viewModel.createChatWithReceiver(receiverId, isDoctor) { chatId ->
-                                                val route = if(isDoctor) Screen.DoctorScreen.Message.route else Screen.PatientScreen.Message.route
-                                                    .replace("{chatId}", chatId)
-                                                    .replace("{receiverId}", receiverId)
+                                            viewModel.createChatWithReceiver(receiverId, isDoctor)
 
-                                                navController.navigate(route)
-                                            }
+                                            showDialog = false
+
                                         }
                                         .padding(12.dp)
                                 )

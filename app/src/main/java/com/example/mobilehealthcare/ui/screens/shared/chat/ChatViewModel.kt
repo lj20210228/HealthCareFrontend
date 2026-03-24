@@ -81,22 +81,49 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun createChatWithReceiver(receiverId: String, isDoctor: Boolean, onSuccess: (chatId: String) -> Unit) = viewModelScope.launch {
-        val userId = userId
+    fun createChatWithReceiver(
+        receiverId: String,
+        isDoctor: Boolean
+    ) = viewModelScope.launch {
+
+        val currentUserId = userId ?: return@launch
+
         val chat = Chat(
-            doctorId = if (isDoctor) userId!! else receiverId,
-            patientId = if (isDoctor) receiverId else userId!!,
+            doctorId = if (isDoctor) currentUserId else receiverId,
+            patientId = if (isDoctor) receiverId else currentUserId,
         )
+
         val response = chatService.addChat(chat)
         val body = response.body()
-        Log.d("ChatViewModel", "Creating chat with $receiverId, isDoctor=$isDoctor")
 
         if (body is BaseResponse.SuccessResponse) {
-            onSuccess(body.data!!.id!!)
+
+            val newChat = body.data!!
+
+            val chatForUi = if (isDoctor) {
+                val patient = (patientService.getPatientByUserId(receiverId)
+                    .body() as? BaseResponse.SuccessResponse)?.data
+
+                ChatForUi(chat = newChat, patient = patient)
+            } else {
+                val doctor = (doctorService.getDoctorForUserId(receiverId)
+                    .body() as? BaseResponse.SuccessResponse)?.data
+
+                ChatForUi(chat = newChat, doctor = doctor)
+            }
+
+            _uiState.update {
+                val updated = (listOf(chatForUi) + it.chats)
+                    .distinctBy { chat -> chat.chat.id }
+
+                it.copy(chats = updated)
+            }
+
         } else {
             _uiState.update { it.copy(errorMessage = response.message()) }
         }
     }
+
 
     fun getPatientsForDoctor(doctorId: String) = viewModelScope.launch {
         val response = selectedDoctorService.getPatientsForSelectedDoctor(doctorId)

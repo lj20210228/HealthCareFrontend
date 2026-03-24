@@ -10,6 +10,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface TerminService {
     @GET("/termin/patient/{id}")
@@ -23,6 +24,12 @@ interface TerminService {
     suspend fun updateTermin(@Body termin: Termin): Response<BaseResponse<Termin>>
     @DELETE("/termin/delete/{id}")
     suspend fun deleteTermin(@Path("id") terminId:String): Response<BaseResponse<Boolean>>
+
+    @GET("termin/doctor/{doctorId}/termins")
+    suspend fun getTerminsForDoctorForDate(
+        @Path("doctorId") doctorId: String,
+        @Query("date") date: String
+    ): Response<ListResponse<Termin>>
 
 
 

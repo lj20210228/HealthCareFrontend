@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.input.TextFieldValue
@@ -54,7 +56,21 @@ fun MessageScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))) {
+    Column(modifier = Modifier.fillMaxSize()
+        .background(brush = Brush.radialGradient(
+        colors = listOf(
+            Color(0xFF81D4FA), // svetlo plava
+            Color(0xFF0288D1),
+        )
+
+
+        ,
+
+        center = Offset.Unspecified,
+        radius = 1000f,
+
+    ))) {
+
 
         Box(
             modifier = Modifier
@@ -72,10 +88,14 @@ fun MessageScreen(
         LazyColumn(
             state = listState,
             modifier = Modifier
+
                 .weight(1f)
-                .padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+
+
         ) {
+
             items(uiState.messages) { message ->
                 MessageItem(message, viewModel.userId!!)
             }
@@ -94,8 +114,7 @@ fun MessageScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
                     .weight(1f)
-                    .background(Color.White, RoundedCornerShape(24.dp)),
-
+,
                 maxLines = 4,
                 shape =RoundedCornerShape(16.dp)
             )

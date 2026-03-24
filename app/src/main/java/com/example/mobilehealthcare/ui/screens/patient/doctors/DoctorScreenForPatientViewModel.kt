@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
 import javax.inject.Inject
 import kotlin.collections.emptyList
 
@@ -188,6 +190,65 @@ class DoctorScreenForPatientViewModel @Inject constructor(
             Log.d("Hospital",_uiState.value.hospital.toString())
         }
     }
+    fun getAvailableSlots(doctorId:String,date: LocalDate){
+        viewModelScope.launch {
+            val terminResponse=terminService.getTerminsForDoctorForDate(
+                doctorId,
+                date.toString()
+            )
+            val terminBody=terminResponse.body()
+            val takenTermins=if (terminBody is ListResponse.SuccessResponse)
+            {
+                terminBody.data?:emptyList()
+            }else emptyList()
+            val workTimeResponse=workTimeService.getWorkTimeForDoctorId(doctorId)
+            val workTimeBody=workTimeResponse.body()
+            val workTimes=if(workTimeBody is ListResponse.SuccessResponse){
+                workTimeBody.data?:emptyList()
+            }else emptyList()
+            val availableSlots = calculateAvailableSlots(workTimes, takenTermins, date)
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    availableSlots=availableSlots
+                )
+            }
+        }
+    }
+    fun calculateAvailableSlots(
+        workTimes: List<WorkTime?>,
+        takenTermins: List<Termin?>,
+        date: LocalDate
+    ): List<LocalTime> {
+
+        val takenTimes = takenTermins.mapNotNull {
+            it?.startTime
+        }.toSet()
+
+        val availableSlots = mutableListOf<LocalTime>()
+
+        workTimes.forEach { workTime ->
+            if (workTime == null) return@forEach
+
+            var current = workTime.startTime
+            val end = workTime.endTime
+
+            while (current.isBefore(end)) {
+
+                if (!takenTimes.contains(current)) {
+                    availableSlots.add(current)
+                }
+
+                current = current.plusHours(1)
+            }
+        }
+
+        return availableSlots
+    }
+    fun clearSlots() {
+        _uiState.update { it.copy(availableSlots = emptyList()) }
+    }
+
     fun logout(){
         tokenStorage.clearToken()
         tokenStorage.clearPatientId()
@@ -204,6 +265,8 @@ data class HomePatientUiState(
     val isLoading: Boolean=true,
     val myDoctors: List<Pair<Doctor, List<WorkTime?>>> =emptyList(),
     val allDoctors: List<Pair<Doctor,List<WorkTime?>>> =emptyList(),
+    val availableSlots: List<LocalTime> = emptyList(),
+
     val hospital: Hospital?=null,
     val error:String?=null
 )
